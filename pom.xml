@@ -1,0 +1,35 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.lithium.integrations.esb</groupId>
+	<artifactId>lithium-esb</artifactId>
+	<version>0.0.1</version>
+
+	<name>lithium-esb</name>
+	<url>http://maven.apache.org</url>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<camel.osgi.export.pkg>com.lithium.integrations.esb.spring.*</camel.osgi.export.pkg>
+		<camel.osgi.import.additional>org.apache.activemq.xbean,org.apache.activemq.broker,org.apache.activemq.pool</camel.osgi.import.additional>
+	</properties>
+
+	<dependencies>
+
+	</dependencies>
+	<build>
+		<plugins>
+			<!-- Allows the routes to be run via 'mvn camel:run' -->
+			<plugin>
+				<groupId>org.apache.camel</groupId>
+				<artifactId>camel-maven-plugin</artifactId>
+				<version>${project.version}</version>
+			</plugin>
+		</plugins>
+	</build>
+	<packaging>pom</packaging>
+	<modules>
+		<module>lithium-esb-compliance</module>
+	</modules>
+</project>
