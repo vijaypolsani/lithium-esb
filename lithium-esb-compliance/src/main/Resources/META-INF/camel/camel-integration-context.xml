@@ -53,7 +53,7 @@
 		</route>
 		<!-- Read Messages from External. Modify Headers & Identifiers. Dump into internal Transport -->
 		<route id="Hdfs-Integration">
-			<from uri="hdfs2://{{hdfs2.host}}:{{hdfs2.port}}/{{hdfs2.folder}}/{{hdfs2.file}}?initialDelay={{hdfs2.file.polling.interval}}" />
+			<from uri="hdfs2://{{hdfs2.host}}:{{hdfs2.port}}/{{hdfs2.folder}}/{{hdfs2.file}}?initialDelay={{hdfs2.file.polling.interval}}&amp;openedSuffix={{hdfs2.openedSuffix}}&amp;readSuffix={{hdfs2.readSuffix}}" />
 			<process ref="handleHdfsLogProcessor" />
 			<!-- Parallel Socket access of ZMQ is causing issues. Please refrain from that in version 2.2.0. -->
 			<log message="Message PUSH to MQ ${body}" />
