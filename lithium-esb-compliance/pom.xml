@@ -87,12 +87,23 @@
 			<artifactId>jzmq</artifactId>
 			<version>2.2.2</version>
 		</dependency>
-		<!-- Ping Servlet-->
+		<!-- Ping Servlet -->
 		<dependency>
 			<groupId>org.apache.camel</groupId>
 			<artifactId>camel-servlet</artifactId>
 			<version>2.14.0</version>
-		</dependency>		
+		</dependency>
+		<!-- HDFS Client -->
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-client</artifactId>
+			<version>2.5.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-core</artifactId>
+			<version>1.2.1</version>
+		</dependency>
 
 		<!-- logging -->
 		<dependency>
@@ -105,7 +116,7 @@
 			<artifactId>log4j</artifactId>
 			<version>1.2.17</version>
 		</dependency>
-		
+
 		<!-- testing -->
 		<dependency>
 			<groupId>junit</groupId>
@@ -125,23 +136,15 @@
 			<version>2.14.0</version>
 			<scope>test</scope>
 		</dependency>
-		<!--   
+		<!-- <dependency> <groupId>org.apache.camel</groupId> <artifactId>camel-spring-integration</artifactId> <version>2.14.0</version> 
+			</dependency> <dependency> <groupId>org.apache.camel</groupId> <artifactId>camel-zookeeper</artifactId> <version>2.14.0</version> 
+			</dependency> -->
+		<!-- Spring Data jar for ELasticSearch Connectivity -->
 		<dependency>
-			<groupId>org.apache.camel</groupId>
-			<artifactId>camel-jetty</artifactId>
-			<version>2.14.0</version>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-elasticsearch</artifactId>
+			<version>1.0.0.RELEASE</version>
 		</dependency>
-		<dependency>
-			<groupId>org.apache.camel</groupId>
-			<artifactId>camel-spring-integration</artifactId>
-			<version>2.14.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.camel</groupId>
-			<artifactId>camel-zookeeper</artifactId>
-			<version>2.14.0</version>
-		</dependency>
-		-->
 	</dependencies>
 	<build>
 		<plugins>

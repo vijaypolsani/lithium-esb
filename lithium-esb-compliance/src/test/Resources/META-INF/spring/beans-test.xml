@@ -8,7 +8,6 @@
 	<import resource="classpath:./spring/commonContext.xml" />
 	<bean class="org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor" />
 
-	<bean id="convertFileNameToModelProcessor" class="com.lithium.esb.compliance.common.ConvertFileNameToModelProcessor" />
 	<bean id="handleHdfsLogProcessor" class="com.lithium.esb.compliance.common.HandleHdfsLogProcessor" />
 	<bean id="commonLogProcessor" class="com.lithium.esb.compliance.common.CommonLogProcessor" />
 	<bean id="splitMessageProcessor" class="com.lithium.esb.compliance.common.SplitMessageProcessor" />
