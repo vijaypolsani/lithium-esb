@@ -24,7 +24,7 @@ public class Hadfs2InboundAdaptorTest {
 	public void getListOfFiles() {
 		Collection<String> listOfFiles;
 		try {
-			listOfFiles = hadfs2InboundAdaptor.getListOfLatestHdfsFiles();
+			listOfFiles = hadfs2InboundAdaptor.getSetOfLatestHdfsFiles();
 			log.info(">>> Size of Files: " + listOfFiles.size());
 			log.info(">>> List of Files: " + listOfFiles.toString());
 		} catch (IOException e) {

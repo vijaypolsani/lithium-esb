@@ -8,8 +8,8 @@
 	<import resource="classpath:./spring/commonContext.xml" />
 	<bean class="org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor" />
 
-	<bean id="convertFileNameToModelProcessor" class="com.lithium.esb.compliance.common.ConvertFileNameToModelProcessor" />
-	<bean id="handleHdfsLogProcessor" class="com.lithium.esb.compliance.common.HandleHdfsLogProcessor" />
+	<bean id="convertFileNameToModel" class="com.lithium.esb.compliance.common.ConvertFileNameToModel" />
+	<bean id="hdfsLogProcessor" class="com.lithium.esb.compliance.common.HdfsLogProcessor" />
 	<bean id="commonLogProcessor" class="com.lithium.esb.compliance.common.CommonLogProcessor" />
 	<bean id="splitMessageProcessor" class="com.lithium.esb.compliance.common.SplitMessageProcessor" />
 	<bean id="globalExceptionProcessor" class="com.lithium.esb.compliance.exception.GlobalExceptionProcessor" />
@@ -36,8 +36,11 @@
 	<bean id="hdfs2InboundAdaptorFactory" class="com.lithium.esb.compliance.inbound.Hdfs2InboundAdaptorFactory">
 		<property name="hdfs2InboundService" ref="hdfs2InboundService" />
 	</bean>
-
 	<bean id="hdfs2InboundAdaptor" scope="prototype" factory-bean="hdfs2InboundAdaptorFactory" factory-method="createHdfs2InboundService">
+	</bean>
+
+	<bean id="hdfs2ConsumerService" scope="prototype" class="com.lithium.esb.compliance.inbound.Hdfs2ConsumerProvider"
+		factory-method="creatHdfs2ConsumerProviderWithDefaultConfiguration">
 	</bean>
 
 

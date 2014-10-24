@@ -1,5 +1,7 @@
 package com.lithium.esb.compliance.model;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 
@@ -12,13 +14,17 @@ public class HdfsFileDetail {
 	private String description;
 	private boolean fileOpened;
 	private boolean fileRead;
+	private static final AtomicLong sequenceNumber = new AtomicLong(1);
 
 	public HdfsFileDetail() {
 	}
 
 	public HdfsFileDetail(String id, String name, String description, boolean fileOpened, boolean fileRead) {
 		this();
-		this.id = id;
+		if (id == null)
+			this.id = String.valueOf(sequenceNumber.getAndIncrement());
+		else
+			this.id = id;
 		this.name = name;
 		this.description = description;
 		this.fileOpened = fileOpened;

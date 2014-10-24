@@ -10,7 +10,7 @@ public interface EsOutboundService {
 
 	public void insertFileInfo(HdfsFileDetail hdfsFileDetail);
 
-	public void updateFileInfo(Set<HdfsFileDetail> hdfsFileDetails);
+	public void updateFilesInfo(Set<HdfsFileDetail> hdfsFilesDetails);
 
 	public void updateFileInfo(HdfsFileDetail hdfsFileDetail);
 

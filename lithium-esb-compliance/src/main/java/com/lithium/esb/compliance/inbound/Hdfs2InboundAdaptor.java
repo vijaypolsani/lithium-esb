@@ -35,14 +35,16 @@ public class Hdfs2InboundAdaptor implements Hdfs2InboundService {
 		fs = FileSystem.get(conf);
 	}
 
-	public Set<String> getListOfLatestHdfsFiles() throws IOException {
-		log.info("***File created: " + fs.createNewFile(new Path(fileSystemName)));
+	public Set<String> getSetOfLatestHdfsFiles() throws IOException {
+		log.info(">>> File created: " + fs.createNewFile(new Path(fileSystemName)));
 		RemoteIterator<LocatedFileStatus> remoteIterator = fs.listFiles(new Path("/"), true);
 		while (remoteIterator.hasNext()) {
 			LocatedFileStatus locatedFileStatus = remoteIterator.next();
-			log.info("***File Path Name: " + locatedFileStatus.getPath().toString());
+			log.info(">>> File Path Name: " + locatedFileStatus.getPath().toString());
 			//Removing the hdfs://ip:host from the name
-			listOfFiles.add((locatedFileStatus.getPath().toString()).substring(fsDefaultFS.length()));
+			//listOfFiles.add((locatedFileStatus.getPath().toString()).substring(fsDefaultFS.length()));
+			//Keeping hdfs://ip:host from the name 
+			listOfFiles.add(locatedFileStatus.getPath().toString());
 		}
 		return ImmutableSet.<String> builder().addAll(listOfFiles).build();
 	}

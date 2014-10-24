@@ -7,29 +7,16 @@
 	<import resource="classpath:META-INF/spring/beans.xml" />
 
 	<camelContext xmlns="http://camel.apache.org/schema/spring">
-		<propertyPlaceholder id="properties" location="classpath:META-INF/conf/camelEsbConfig.properties"
+		<propertyPlaceholder id="properties" location="classpath:META-INF/conf/integrationEsbConfig.properties"
 			prefixToken="{{" suffixToken="}}" />
+
+		<template id="zeroMqFileTemplate" defaultEndpoint="zeromq:tcp://{{zeromq.host}}:{{zeromq.file_port}}?socketType=PUSH" />
 
 		<threadPoolProfile id="myDefaultProfile" defaultProfile="true" poolSize="{{thread.poolsize}}"
 			keepAliveTime="{{thread.keepalivetime}}" maxPoolSize="{{thread.maxpoolsize}}" maxQueueSize="{{thread.maxqueuesize}}"
 			rejectedPolicy="Abort" />
 
-		<onException>
-			<exception>com.lithium.esb.compliance.exception.EsbGeneralException</exception>
-			<redeliveryPolicy maximumRedeliveries="{{max.redeliveries}}" />
-			<handled>
-				<constant>true</constant>
-			</handled>
-			<bean ref="auditHandler" method="performAuditProcessing" />
-		</onException>
-		<onException>
-			<exception>java.lang.Exception</exception>
-			<handled>
-				<constant>true</constant>
-			</handled>
-			<to uri="globalExceptionProcessor" />
-			<bean ref="auditHandler" method="performAuditProcessing" />
-		</onException>
+
 		<route id="ping">
 			<!-- incoming requests from the servlet is routed -->
 			<from uri="servlet:///ping" />
@@ -51,33 +38,31 @@
 				</otherwise>
 			</choice>
 		</route>
-		<!-- Read Messages from External. Modify Headers & Identifiers. Dump into internal Transport -->
-		<!-- <route id="Hdfs-Integration"> <from uri="hdfs2://{{hdfs2.host}}:{{hdfs2.port}}/{{hdfs2.folder}}/{{hdfs2.file}}?initialDelay={{hdfs2.file.polling.interval}}&amp;openedSuffix={{hdfs2.openedSuffix}}&amp;readSuffix={{hdfs2.readSuffix}}" 
-			/> <process ref="handleHdfsLogProcessor" /> <log message="Message PUSH to MQ ${body}" /> <to uri="zeromq:tcp://{{zeromq.host}}:{{zeromq.port}}?socketType=PUSH" 
-			/> </route> -->
-		<route id="Hdfs-FileList-Adaptor">
-			<from uri="timer://hdfsScanTimer?fixedRate=true&amp;period=5000" />
+		<route id="Hdfs-FileList-Query">
+			<from uri="timer://hdfsScanTimer?fixedRate=true&amp;period=10000" />
 			<pipeline>
-				<bean ref="hadfs2InboundAdaptor" />
-				<process ref="convertTFileNameIntoModel" />
-				<bean ref="esOutboundService" method = "updateFileInfo"  />				
+				<bean ref="hdfs2InboundAdaptor" method="getSetOfLatestHdfsFiles" />
+				<process ref="convertFileNameToModel" />
+				<bean ref="esOutboundService" method="updateFilesInfo" />
 			</pipeline>
-			<process ref="handleHdfsLogProcessor" />
-			<!-- Parallel Socket access of ZMQ is causing issues. Please refrain from that in version 2.2.0. -->
 			<log message="Message In ES Store to MQ ${body}" />
-			<!-- Use socket's to differentiate channels. PUB/SUB PUSH/PULL are with-in a socket -->
 		</route>
-		<route id="Hdfs-Integration">
-			<from
-				uri="hdfs2://{{hdfs2.host}}:{{hdfs2.port}}/{{hdfs2.folder}}/{{hdfs2.file}}?initialDelay={{hdfs2.file.polling.interval}}&amp;openedSuffix={{hdfs2.openedSuffix}}&amp;readSuffix={{hdfs2.readSuffix}}" />
-			<process ref="handleHdfsLogProcessor" />
-			<!-- Parallel Socket access of ZMQ is causing issues. Please refrain from that in version 2.2.0. -->
-			<log message="Message PUSH to MQ ${body}" />
-			<!-- Use socket's to differentiate channels. PUB/SUB PUSH/PULL are with-in a socket -->
-			<to uri="zeromq:tcp://{{zeromq.host}}:{{zeromq.port}}?socketType=PUSH" />
+		<route id="Hdfs-File-Reader">
+			<from uri="timer://hdfsScanTimer?fixedRate=true&amp;period=8000" />
+			<bean ref="esInboundService" method="getAllLatestFilesInfo" />
+			<split>
+				<simple>${body}</simple>
+				<log message="*** Split Body (${body})" />
+				<bean ref="hdfs2ConsumerService" method = "readFileContent" />
+				<log message="*** Hdfs Content (${body})" />
+				<!-- Parallel Socket access of ZMQ is causing issues. Please refrain from that in version 2.2.0. -->
+				<log message="Message PUSH to MQ ${body}" />
+				<!-- Use socket's to differentiate channels. PUB/SUB PUSH/PULL are with-in a socket -->
+				<to uri="zeromq:tcp://{{zeromq.host}}:{{zeromq.push_port}}?socketType=PUSH" />
+			</split>
 		</route>
-		<route id="Integration-Kafka">
-			<from uri="zeromq:tcp://{{zeromq.host}}:{{zeromq.port}}?socketType=PULL&amp;asyncConsumer=true" />
+		<route id="Kafka-Message-Split-Publish">
+			<from uri="zeromq:tcp://{{zeromq.host}}:{{zeromq.push_port}}?socketType=PULL&amp;asyncConsumer=true" />
 			<log message="Message PULL of MQ with BODY: ${body}" />
 			<!-- throttle 100000 messages per 1 sec -->
 			<throttle timePeriodMillis="10000">

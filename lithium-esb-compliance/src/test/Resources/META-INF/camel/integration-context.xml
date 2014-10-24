@@ -7,12 +7,14 @@
 	<import resource="classpath:META-INF/spring/beans.xml" />
 
 	<camelContext xmlns="http://camel.apache.org/schema/spring">
-		<propertyPlaceholder id="properties" location="classpath:META-INF/conf/camelEsbConfig.properties"
+		<propertyPlaceholder id="properties" location="classpath:META-INF/conf/integrationEsbConfig.properties"
 			prefixToken="{{" suffixToken="}}" />
 
+		<template id="zeroMqFileTemplate" defaultEndpoint="zeromq:tcp://{{zeromq.host}}:{{zeromq.file_port}}?socketType=PUSH" />
+
 		<threadPoolProfile id="myDefaultProfile" defaultProfile="true" poolSize="{{thread.poolsize}}"
-	keepAliveTime="{{thread.keepalivetime}}" maxPoolSize="{{thread.maxpoolsize}}" maxQueueSize="{{thread.maxqueuesize}}"
-	rejectedPolicy="Abort" />
+			keepAliveTime="{{thread.keepalivetime}}" maxPoolSize="{{thread.maxpoolsize}}" maxQueueSize="{{thread.maxqueuesize}}"
+			rejectedPolicy="Abort" />
 
 		<onException>
 			<exception>com.lithium.esb.compliance.exception.EsbGeneralException</exception>
@@ -51,17 +53,31 @@
 				</otherwise>
 			</choice>
 		</route>
-		<!-- Read Messages from External. Modify Headers & Identifiers. Dump into internal Transport -->
-		<route id="Hdfs-Integration">
-			<from uri="hdfs2://{{hdfs2.host}}:{{hdfs2.port}}/{{hdfs2.folder}}/{{hdfs2.file}}?initialDelay={{hdfs2.file.polling.interval}}&amp;openedSuffix={{hdfs2.openedSuffix}}&amp;readSuffix={{hdfs2.readSuffix}}" />
-			<process ref="handleHdfsLogProcessor" />
+		<route id="Hdfs-FileList-Query">
+			<from uri="timer://hdfsScanTimer?fixedRate=true&amp;period=5000" />
+			<pipeline>
+				<bean ref="hdfs2InboundAdaptor" />
+				<process ref="convertFileNameToModel" />
+				<bean ref="esOutboundService" method="updateFileInfo" />
+			</pipeline>
+			<process ref="hdfsLogProcessor" />
+			<!-- Parallel Socket access of ZMQ is causing issues. Please refrain from that in version 2.2.0. -->
+			<log message="Message In ES Store to MQ ${body}" />
+			<!-- Use socket's to differentiate channels. PUB/SUB PUSH/PULL are with-in a socket -->
+			<to uri="direct:Hdfs-File-Reader" />
+			<log message="Single file name Message to process in HDFS ${body}" />
+		</route>
+		<route id="Hdfs-File-Reader">
+			<from
+				uri="hdfs2://{{hdfs2.host}}:{{hdfs2.port}}/{{hdfs2.folder}}/{{hdfs2.file}}?initialDelay={{hdfs2.file.polling.interval}}&amp;openedSuffix={{hdfs2.openedSuffix}}&amp;readSuffix={{hdfs2.readSuffix}}" />
+			<process ref="hdfsLogProcessor" />
 			<!-- Parallel Socket access of ZMQ is causing issues. Please refrain from that in version 2.2.0. -->
 			<log message="Message PUSH to MQ ${body}" />
 			<!-- Use socket's to differentiate channels. PUB/SUB PUSH/PULL are with-in a socket -->
-			<to uri="zeromq:tcp://{{zeromq.host}}:{{zeromq.port}}?socketType=PUSH" />
+			<to uri="zeromq:tcp://{{zeromq.host}}:{{zeromq.push_port}}?socketType=PUSH" />
 		</route>
-		<route id="Integration-Kafka">
-			<from uri="zeromq:tcp://{{zeromq.host}}:{{zeromq.port}}?socketType=PULL&amp;asyncConsumer=true" />
+		<route id="Kafka-Message-Split-Publish">
+			<from uri="zeromq:tcp://{{zeromq.host}}:{{zeromq.push_port}}?socketType=PULL&amp;asyncConsumer=true" />
 			<log message="Message PULL of MQ with BODY: ${body}" />
 			<!-- throttle 100000 messages per 1 sec -->
 			<throttle timePeriodMillis="10000">
