@@ -7,31 +7,71 @@
 	<import resource="classpath:META-INF/spring/beans.xml" />
 
 	<camelContext xmlns="http://camel.apache.org/schema/spring">
+		<!-- Property File Configurations -->
 		<propertyPlaceholder id="properties" location="classpath:META-INF/conf/integrationEsbConfig.properties"
 			prefixToken="{{" suffixToken="}}" />
-
+		<!-- ZeroMQ Configurations -->
 		<template id="zeroMqFileTemplate" defaultEndpoint="zeromq:tcp://{{zeromq.host}}:{{zeromq.file_port}}?socketType=PUSH" />
-
+		<!-- Thread pool for Parallel Operations. Split Configurations -->
 		<threadPoolProfile id="myDefaultProfile" defaultProfile="true" poolSize="{{thread.poolsize}}"
-			keepAliveTime="{{thread.keepalivetime}}" maxPoolSize="{{thread.maxpoolsize}}" maxQueueSize="{{thread.maxqueuesize}}"
-			rejectedPolicy="Abort" />
+			maxPoolSize="{{thread.maxpoolsize}}" maxQueueSize="{{thread.maxqueuesize}}" rejectedPolicy="CallerRuns" />
 
-		<onException>
-			<exception>com.lithium.esb.compliance.exception.EsbGeneralException</exception>
-			<redeliveryPolicy maximumRedeliveries="{{max.redeliveries}}" />
-			<handled>
-				<constant>true</constant>
-			</handled>
-			<bean ref="auditHandler" method="performAuditProcessing" />
-		</onException>
-		<onException>
-			<exception>java.lang.Exception</exception>
-			<handled>
-				<constant>true</constant>
-			</handled>
-			<to uri="globalExceptionProcessor" />
-			<bean ref="auditHandler" method="performAuditProcessing" />
-		</onException>
+		<!-- Reading HDFS files list, Putting into ES -->
+		<route id="Hdfs-FileList-Query">
+			<from uri="timer://hdfsScanTimer?fixedRate=true&amp;period=10000" />
+			<pipeline>
+				<bean ref="hdfs2InboundAdaptor" method="getSetOfLatestHdfsFiles" />
+				<process ref="convertFileNameToModel" />
+				<bean ref="esOutboundService" method="updateFilesInfo" />
+			</pipeline>
+			<log message="*** Message In ES Store to MQ ${body}" />
+		</route>
+
+		<!-- Reading ES files list, Split files list, Read File Content, dump content into MQ -->
+		<route id="Hdfs-File-Reader">
+			<from uri="timer://hdfsScanTimer?fixedRate=true&amp;period=8000" />
+			<bean ref="esInboundService" method="getAllFileReadAndFileOpenedStatus(false, false)" />
+			<split>
+				<simple>${body}</simple>
+				<log message="*** Split Body (${body})" />
+				<setHeader headerName="fileName">
+					<!-- use resultType to indicate that the type should be a java.lang.Boolean -->
+					<simple resultType="java.lang.String">${body}</simple>
+				</setHeader>
+				<bean ref="esOutboundService" method="updateFileOpenedStatus('${header.fileName}',true)" />
+				<bean ref="hdfs2ConsumerService" method="readFileContent" />
+				<log message="*** Hdfs Content Header (${header.fileName})" />
+				<!-- log message="*** Hdfs Content Body (${body})" / -->
+				<!-- Parallel Socket access of ZMQ is causing issues. Please refrain from that in version 2.2.0. -->
+				<!-- Use socket's to differentiate channels. PUB/SUB PUSH/PULL are with-in a socket -->
+				<bean ref="esOutboundService" method="updateFileReadStatus('${header.fileName}',true)" />
+				<to uri="zeromq:tcp://{{zeromq.host}}:{{zeromq.push_port}}?socketType=PUSH" />
+				<bean ref="esOutboundService" method="updateFileMqSentStatus('${header.fileName}',true)" />
+			</split>
+		</route>
+		<!-- Read from MQ file content, Split file Content, dump content into Kafka -->
+		<route id="Kafka-Message-Split-Publish">
+			<from uri="zeromq:tcp://{{zeromq.host}}:{{zeromq.push_port}}?socketType=PULL&amp;asyncConsumer=true" />
+			<!-- log message="*** Message PULL of MQ with BODY: ${body}" / -->
+			<!-- throttle 100000 messages per 1 sec -->
+			<throttle timePeriodMillis="10000">
+				<constant>{{throttle.msg.limit}}</constant>
+				<split shareUnitOfWork="true" streaming="true" parallelProcessing="true" executorServiceRef="myDefaultProfile">
+					<tokenize token="{{split.tokenizer}}" />
+					<!-- Process any specific splits ref="splitMessageProcessor" / -->
+					<!-- If needed perform Decryption & Encryption here. -->
+					<setHeader headerName="kafka.PARTITION_KEY">
+						<constant>{{kafka.partition.key}}</constant>
+					</setHeader>
+					<log message="*** Message kafka send to MQ Header: (${header.KAFKA.PARTITION_KEY}) with Body: (${body})" />
+					<to
+						uri="kafka:{{kafka.host}}:{{kafka.port}}?topic={{kafka.topic}}&amp;zookeeperHost={{zookeeper.host}}&amp;zookeeperPort={{zookeeper.port}}&amp;serializerClass={{kafka.serializer}}" />
+				</split>
+			</throttle>
+			<log message="*** Message kafka send completed." />
+		</route>
+
+		<!-- Alive Check Ping Route -->
 		<route id="ping">
 			<!-- incoming requests from the servlet is routed -->
 			<from uri="servlet:///ping" />
@@ -53,49 +93,5 @@
 				</otherwise>
 			</choice>
 		</route>
-		<route id="Hdfs-FileList-Query">
-			<from uri="timer://hdfsScanTimer?fixedRate=true&amp;period=5000" />
-			<pipeline>
-				<bean ref="hdfs2InboundAdaptor" />
-				<process ref="convertFileNameToModel" />
-				<bean ref="esOutboundService" method="updateFileInfo" />
-			</pipeline>
-			<process ref="hdfsLogProcessor" />
-			<!-- Parallel Socket access of ZMQ is causing issues. Please refrain from that in version 2.2.0. -->
-			<log message="Message In ES Store to MQ ${body}" />
-			<!-- Use socket's to differentiate channels. PUB/SUB PUSH/PULL are with-in a socket -->
-			<to uri="direct:Hdfs-File-Reader" />
-			<log message="Single file name Message to process in HDFS ${body}" />
-		</route>
-		<route id="Hdfs-File-Reader">
-			<from
-				uri="hdfs2://{{hdfs2.host}}:{{hdfs2.port}}/{{hdfs2.folder}}/{{hdfs2.file}}?initialDelay={{hdfs2.file.polling.interval}}&amp;openedSuffix={{hdfs2.openedSuffix}}&amp;readSuffix={{hdfs2.readSuffix}}" />
-			<process ref="hdfsLogProcessor" />
-			<!-- Parallel Socket access of ZMQ is causing issues. Please refrain from that in version 2.2.0. -->
-			<log message="Message PUSH to MQ ${body}" />
-			<!-- Use socket's to differentiate channels. PUB/SUB PUSH/PULL are with-in a socket -->
-			<to uri="zeromq:tcp://{{zeromq.host}}:{{zeromq.push_port}}?socketType=PUSH" />
-		</route>
-		<route id="Kafka-Message-Split-Publish">
-			<from uri="zeromq:tcp://{{zeromq.host}}:{{zeromq.push_port}}?socketType=PULL&amp;asyncConsumer=true" />
-			<log message="Message PULL of MQ with BODY: ${body}" />
-			<!-- throttle 100000 messages per 1 sec -->
-			<throttle timePeriodMillis="10000">
-				<constant>{{throttle.msg.limit}}</constant>
-				<split shareUnitOfWork="true" streaming="true" parallelProcessing="true" executorServiceRef="myDefaultProfile">
-					<tokenize token="{{split.tokenizer}}" />
-					<!-- Process any specific splits ref="splitMessageProcessor" / -->
-					<!-- If needed perform Decryption & Encryption here. -->
-					<setHeader headerName="kafka.PARTITION_KEY">
-						<constant>{{kafka.partition.key}}</constant>
-					</setHeader>
-					<log message="Message kafka send to MQ Header: (${header.KAFKA.PARTITION_KEY}) with Body: (${body})" />
-					<to
-						uri="kafka:{{kafka.host}}:{{kafka.port}}?topic={{kafka.topic}}&amp;zookeeperHost={{zookeeper.host}}&amp;zookeeperPort={{zookeeper.port}}&amp;serializerClass={{kafka.serializer}}" />
-					<log message="Message kafka send completed." />
-				</split>
-			</throttle>
-		</route>
-
 	</camelContext>
 </beans>

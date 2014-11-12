@@ -22,13 +22,13 @@ public class Hdfs2InboundAdaptor implements Hdfs2InboundService {
 	private static final Logger log = LoggerFactory.getLogger(Hdfs2InboundAdaptor.class);
 	private static final Configuration conf = new Configuration();
 	private final Set<String> listOfFiles = new LinkedHashSet<>();
-	private final String fileSystemName;
+	private final String lookupFolderName;
 	private final String fsDefaultFS;
 
 	private final FileSystem fs;
 
-	public Hdfs2InboundAdaptor(String defaultFs, String hdfsJobUgi, String fileSystemName) throws IOException {
-		this.fileSystemName = fileSystemName;
+	public Hdfs2InboundAdaptor(String defaultFs, String hdfsJobUgi, String lookupFolderName) throws IOException {
+		this.lookupFolderName = lookupFolderName;
 		this.fsDefaultFS = defaultFs;
 		conf.set("fs.defaultFS", defaultFs);
 		conf.set("hadoop.job.ugi", hdfsJobUgi);
@@ -36,8 +36,7 @@ public class Hdfs2InboundAdaptor implements Hdfs2InboundService {
 	}
 
 	public Set<String> getSetOfLatestHdfsFiles() throws IOException {
-		log.info(">>> File created: " + fs.createNewFile(new Path(fileSystemName)));
-		RemoteIterator<LocatedFileStatus> remoteIterator = fs.listFiles(new Path("/"), true);
+		RemoteIterator<LocatedFileStatus> remoteIterator = fs.listFiles(new Path(lookupFolderName), true);
 		while (remoteIterator.hasNext()) {
 			LocatedFileStatus locatedFileStatus = remoteIterator.next();
 			log.info(">>> File Path Name: " + locatedFileStatus.getPath().toString());
@@ -47,6 +46,14 @@ public class Hdfs2InboundAdaptor implements Hdfs2InboundService {
 			listOfFiles.add(locatedFileStatus.getPath().toString());
 		}
 		return ImmutableSet.<String> builder().addAll(listOfFiles).build();
+	}
+
+	public void deleteAllFiles(String path, boolean recursiveTrue) throws IOException {
+		fs.delete(new Path(path), recursiveTrue);
+	}
+
+	public void createFile(String path) throws IOException {
+		fs.createNewFile(new Path(path));
 	}
 
 	public static void main(String args[]) {
@@ -64,9 +71,9 @@ public class Hdfs2InboundAdaptor implements Hdfs2InboundService {
 
 					FileSystem fs = FileSystem.get(conf);
 
-					log.info("***File created: " + fs.createNewFile(new Path("/int/client1.test")));
+					log.info("***File created: " + fs.createNewFile(new Path("/int/maintestcase.log")));
 
-					RemoteIterator<LocatedFileStatus> remoteIterator = fs.listFiles(new Path("/"), true);
+					RemoteIterator<LocatedFileStatus> remoteIterator = fs.listFiles(new Path("/int"), true);
 					while (remoteIterator.hasNext()) {
 						LocatedFileStatus locatedFileStatus = remoteIterator.next();
 						log.info("***File remoteIterator: " + locatedFileStatus.getPath().getName());

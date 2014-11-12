@@ -21,7 +21,7 @@ public class Hdfs2ConsumerTest {
 		BasicConfigurator.resetConfiguration();
 		BasicConfigurator.configure();
 		hdfs2ConsumerProvider = Hdfs2ConsumerProvider.creatHdfs2ConsumerProviderWithDefaultConfiguration();
-		//hdfs2ConsumerProvider.createFile(FILE_NAME);
+		hdfs2ConsumerProvider.createFile(FILE_NAME);
 	}
 
 	@Test
@@ -38,6 +38,6 @@ public class Hdfs2ConsumerTest {
 
 	@After
 	public void cleanUp() throws IOException {
-		//hdfs2ConsumerProvider.deleteFile(FILE_NAME);
+		hdfs2ConsumerProvider.deleteFile(FILE_NAME);
 	}
 }

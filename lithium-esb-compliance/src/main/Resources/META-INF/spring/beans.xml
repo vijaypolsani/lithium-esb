@@ -30,7 +30,7 @@
 	<bean id="hdfs2InboundService" class="com.lithium.esb.compliance.inbound.Hdfs2InboundAdaptor">
 		<constructor-arg name="defaultFs" type="java.lang.String" value="${fs.defaultFS}" />
 		<constructor-arg name="hdfsJobUgi" type="java.lang.String" value="${hdfsJobUgi}" />
-		<constructor-arg name="fileSystemName" type="java.lang.String" value="${fileSystemName}" />
+		<constructor-arg name="lookupFolderName" type="java.lang.String" value="${lookupFolderName}" />
 	</bean>
 
 	<bean id="hdfs2InboundAdaptorFactory" class="com.lithium.esb.compliance.inbound.Hdfs2InboundAdaptorFactory">

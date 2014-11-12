@@ -33,9 +33,13 @@ public class EsOutboundAdaptor implements EsOutboundService {
 	public void updateFilesInfo(Set<HdfsFileDetail> hdfsFilesDetails) {
 		log.info(">>> New Files list recieved to be persisted into ES: " + hdfsFilesDetails);
 		for (HdfsFileDetail hdfsFileDetail : hdfsFilesDetails) {
-			hdfsSearchInputFilesRepository.save(hdfsFileDetail);
+			if (!(hdfsSearchInputFilesRepository.exists(hdfsFileDetail.getId())))
+				hdfsSearchInputFilesRepository.save(hdfsFileDetail);
+			else
+				log.info(">>> File already exits in ES: " + hdfsFileDetail);
+
 		}
-		log.info(">>> Complted save: ");
+		log.info(">>> Completed save: ");
 
 	}
 
@@ -47,6 +51,48 @@ public class EsOutboundAdaptor implements EsOutboundService {
 	@Override
 	public void dropAllFileDetailData() {
 		hdfsSearchInputFilesRepository.deleteAll();
+	}
+
+	@Override
+	public void updateFileOpenedStatus(String id, boolean fileOpened) {
+		if (hdfsSearchInputFilesRepository.exists(id)) {
+			HdfsFileDetail hdfsFileDetail = hdfsSearchInputFilesRepository.findOne(id);
+			hdfsFileDetail.setFileOpened(fileOpened);
+			hdfsSearchInputFilesRepository.save(hdfsFileDetail);
+		} else
+			log.info(">>> File with name does not exist in ES: " + id);
+	}
+
+	@Override
+	public void updateFileReadStatus(String id, boolean fileRead) {
+		if (hdfsSearchInputFilesRepository.exists(id)) {
+			HdfsFileDetail hdfsFileDetail = hdfsSearchInputFilesRepository.findOne(id);
+			hdfsFileDetail.setFileRead(fileRead);
+			hdfsSearchInputFilesRepository.save(hdfsFileDetail);
+		} else
+			log.info(">>> File with name does not exist in ES: " + id);
+	}
+
+	@Override
+	public void updateFileMqSentStatus(String id, boolean mqSent) {
+		if (hdfsSearchInputFilesRepository.exists(id)) {
+			HdfsFileDetail hdfsFileDetail = hdfsSearchInputFilesRepository.findOne(id);
+			hdfsFileDetail.setMqSent(mqSent);
+			hdfsSearchInputFilesRepository.save(hdfsFileDetail);
+		} else
+			log.info(">>> File with name does not exist in ES: " + id);
+
+	}
+
+	@Override
+	public void updateFileOpenedAndFileReadStatus(String id, boolean fileOpened, boolean fileRead) {
+		if (hdfsSearchInputFilesRepository.exists(id)) {
+			HdfsFileDetail hdfsFileDetail = hdfsSearchInputFilesRepository.findOne(id);
+			hdfsFileDetail.setFileOpened(fileRead);
+			hdfsFileDetail.setFileOpened(fileOpened);
+			hdfsSearchInputFilesRepository.save(hdfsFileDetail);
+		} else
+			log.info(">>> File with name does not exist in ES: " + id);
 	}
 
 }

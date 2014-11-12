@@ -10,7 +10,6 @@ import org.apache.camel.Processor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableSet;
 import com.lithium.esb.compliance.model.HdfsFileDetail;
 
 public class ConvertFileNameToModel implements Processor {
@@ -23,7 +22,9 @@ public class ConvertFileNameToModel implements Processor {
 		message.setMessageId(UUID.randomUUID().toString());
 		Set<HdfsFileDetail> updateToEs = new HashSet<>();
 		for (String fileName : listOfFiles) {
-			updateToEs.add(new HdfsFileDetail(null, fileName, "HdfsFile Read from Integrations.", false, false));
+			//INFO: We are using filename with directory structure as ID. (ex: /int/in.log)
+			updateToEs.add(new HdfsFileDetail(fileName, fileName, "HdfsFile read from Integrations Modules.", false,
+					false));
 		}
 		message.setBody(updateToEs);
 		exchange.setOut(message);

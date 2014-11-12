@@ -14,6 +14,7 @@ public class HdfsFileDetail {
 	private String description;
 	private boolean fileOpened;
 	private boolean fileRead;
+	private boolean mqSent;
 	private static final AtomicLong sequenceNumber = new AtomicLong(1);
 
 	public HdfsFileDetail() {
@@ -71,10 +72,24 @@ public class HdfsFileDetail {
 		this.fileRead = fileRead;
 	}
 
+	/**
+	 * @return the kafkaSent
+	 */
+	public boolean isMqSent() {
+		return mqSent;
+	}
+
+	/**
+	 * @param kafkaSent the kafkaSent to set
+	 */
+	public void setMqSent(boolean mqSent) {
+		this.mqSent = mqSent;
+	}
+
 	@Override
 	public String toString() {
 		return "HdfsFileDetail [id=" + id + ", name=" + name + ", description=" + description + ", fileOpened="
-				+ fileOpened + ", fileRead=" + fileRead + "]";
+				+ fileOpened + ", fileRead=" + fileRead + ", kafkaSent=" + mqSent + "]";
 	}
 
 }

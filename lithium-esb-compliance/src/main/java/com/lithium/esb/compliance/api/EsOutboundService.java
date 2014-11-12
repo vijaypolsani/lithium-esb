@@ -14,6 +14,14 @@ public interface EsOutboundService {
 
 	public void updateFileInfo(HdfsFileDetail hdfsFileDetail);
 
+	public void updateFileOpenedStatus(String id, boolean fileOpened);
+
+	public void updateFileReadStatus(String id, boolean fileRead);
+
+	public void updateFileMqSentStatus(String id, boolean mqSent);
+
+	public void updateFileOpenedAndFileReadStatus(String id, boolean fileOpened, boolean fileRead);
+	
 	public void dropAllFileDetailData();
 
 }
