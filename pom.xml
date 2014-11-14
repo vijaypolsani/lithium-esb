@@ -8,6 +8,7 @@
 
 	<name>lithium-esb</name>
 	<url>http://maven.apache.org</url>
+	<description>Lihtium ESB project for Events Integraiton to Message Bus</description>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
