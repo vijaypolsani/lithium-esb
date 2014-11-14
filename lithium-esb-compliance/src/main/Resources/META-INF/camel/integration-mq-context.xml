@@ -45,25 +45,53 @@
 				<!-- Parallel Socket access of ZMQ is causing issues. Please refrain from that in version 2.2.0. -->
 				<!-- Use socket's to differentiate channels. PUB/SUB PUSH/PULL are with-in a socket -->
 				<bean ref="esOutboundService" method="updateFileReadStatus('${header.fileName}',true)" />
-				<!-- throttle 100000 messages per 1 sec -->
-				<throttle timePeriodMillis="10000">
-					<constant>{{throttle.msg.limit}}</constant>
-					<split shareUnitOfWork="true" streaming="true" parallelProcessing="true" executorServiceRef="myDefaultProfile">
-						<tokenize token="{{split.tokenizer}}" />
-						<!-- Process any specific splits ref="splitMessageProcessor" / -->
-						<!-- If needed perform Decryption & Encryption here. -->
-						<setHeader headerName="kafka.PARTITION_KEY">
-							<constant>{{kafka.partition.key}}</constant>
-						</setHeader>
-						<log message="*** Message kafka send to MQ Header: (${header.KAFKA.PARTITION_KEY}) with Body: (${body})" />
-						<to
-							uri="kafka:{{kafka.host}}:{{kafka.port}}?topic={{kafka.topic}}&amp;zookeeperHost={{zookeeper.host}}&amp;zookeeperPort={{zookeeper.port}}&amp;serializerClass={{kafka.serializer}}" />
-						<process ref="convertFileContentToActivityStreamV1" />
-						<bean ref="esOutboundService" method="insertActivityStreamInfo" />
-					</split>
-				</throttle>
+				<to uri="zeromq:tcp://{{zeromq.host}}:{{zeromq.push_port}}?socketType=PUSH" />
+				<bean ref="esOutboundService" method="updateFileMqSentStatus('${header.fileName}',true)" />
 			</split>
-			<bean ref="esOutboundService" method="updateFileKafkaSentStatus('${header.fileName}',true)" />
+		</route>
+		<!-- Read from MQ file content, Split file Content, dump content into Kafka -->
+		<route id="Kafka-Message-Split-Publish">
+			<from uri="zeromq:tcp://{{zeromq.host}}:{{zeromq.push_port}}?socketType=PULL&amp;asyncConsumer=true" />
+			<!-- log message="*** Message PULL of MQ with BODY: ${body}" / -->
+			<!-- throttle 100000 messages per 1 sec -->
+			<throttle timePeriodMillis="10000">
+				<constant>{{throttle.msg.limit}}</constant>
+				<split shareUnitOfWork="true" streaming="true" parallelProcessing="true" executorServiceRef="myDefaultProfile">
+					<tokenize token="{{split.tokenizer}}" />
+					<!-- Process any specific splits ref="splitMessageProcessor" / -->
+					<!-- If needed perform Decryption & Encryption here. -->
+					<setHeader headerName="kafka.PARTITION_KEY">
+						<constant>{{kafka.partition.key}}</constant>
+					</setHeader>
+					<log message="*** Message kafka send to MQ Header: (${header.KAFKA.PARTITION_KEY}) with Body: (${body})" />
+					<to
+						uri="kafka:{{kafka.host}}:{{kafka.port}}?topic={{kafka.topic}}&amp;zookeeperHost={{zookeeper.host}}&amp;zookeeperPort={{zookeeper.port}}&amp;serializerClass={{kafka.serializer}}" />
+				</split>
+			</throttle>
+			<log message="*** Message kafka send completed." />
+		</route>
+
+		<!-- Alive Check Ping Route -->
+		<route id="ping">
+			<!-- incoming requests from the servlet is routed -->
+			<from uri="servlet:///ping" />
+			<choice>
+				<when>
+					<!-- is there a header with the key name? -->
+					<header>name</header>
+					<!-- yes so return back a message to the user -->
+					<transform>
+						<simple>Hello ${header.name} how are you?</simple>
+					</transform>
+				</when>
+				<otherwise>
+					<!-- if no name parameter then output a syntax to the user -->
+					<transform>
+						<constant>pong</constant>
+						<!-- Add a name parameter to uri, eg ?name=foo -->
+					</transform>
+				</otherwise>
+			</choice>
 		</route>
 	</camelContext>
 </beans>

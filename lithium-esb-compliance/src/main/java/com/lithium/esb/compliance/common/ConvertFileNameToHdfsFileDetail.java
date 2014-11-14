@@ -12,8 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import com.lithium.esb.compliance.model.HdfsFileDetail;
 
-public class ConvertFileNameToModel implements Processor {
-	private static final Logger log = LoggerFactory.getLogger(ConvertFileNameToModel.class);
+public class ConvertFileNameToHdfsFileDetail implements Processor {
+	private static final Logger log = LoggerFactory.getLogger(ConvertFileNameToHdfsFileDetail.class);
 
 	public void process(Exchange exchange) throws Exception {
 		Message message = exchange.getIn();

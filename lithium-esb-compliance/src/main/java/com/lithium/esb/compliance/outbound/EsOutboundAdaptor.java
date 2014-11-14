@@ -9,16 +9,20 @@ import org.springframework.stereotype.Service;
 
 import com.lithium.esb.compliance.api.EsOutboundService;
 import com.lithium.esb.compliance.model.HdfsFileDetail;
+import com.lithium.esb.compliance.repositories.HdfsFileContentRepository;
 import com.lithium.esb.compliance.repositories.HdfsSearchInputFilesRepository;
+import com.lithium.esb.compliance.model.ActivityStreamV1;
 
 @Service
 public class EsOutboundAdaptor implements EsOutboundService {
 	private static final Logger log = LoggerFactory.getLogger(EsOutboundAdaptor.class);
 	@Autowired
 	private HdfsSearchInputFilesRepository hdfsSearchInputFilesRepository;
+	@Autowired
+	private HdfsFileContentRepository hdfsFileContentRepository;
 
 	@Override
-	public void insertFileInfo(Set<HdfsFileDetail> hdfsFileDetails) {
+	public void insertBatchFilesInfo(Set<HdfsFileDetail> hdfsFileDetails) {
 		for (HdfsFileDetail hdfsFileDetail : hdfsFileDetails) {
 			hdfsSearchInputFilesRepository.index(hdfsFileDetail);
 		}
@@ -74,7 +78,7 @@ public class EsOutboundAdaptor implements EsOutboundService {
 	}
 
 	@Override
-	public void updateFileMqSentStatus(String id, boolean mqSent) {
+	public void updateFileKafkaSentStatus(String id, boolean mqSent) {
 		if (hdfsSearchInputFilesRepository.exists(id)) {
 			HdfsFileDetail hdfsFileDetail = hdfsSearchInputFilesRepository.findOne(id);
 			hdfsFileDetail.setMqSent(mqSent);
@@ -93,6 +97,19 @@ public class EsOutboundAdaptor implements EsOutboundService {
 			hdfsSearchInputFilesRepository.save(hdfsFileDetail);
 		} else
 			log.info(">>> File with name does not exist in ES: " + id);
+	}
+
+	@Override
+	public void insertBatchActivityStreamInfo(Set<ActivityStreamV1> activityStreamV1) {
+		for (ActivityStreamV1 asV1 : activityStreamV1) {
+			hdfsFileContentRepository.index(asV1);
+		}
+
+	}
+
+	@Override
+	public void insertActivityStreamInfo(ActivityStreamV1 activityStreamV1) {
+		hdfsFileContentRepository.index(activityStreamV1);
 	}
 
 }

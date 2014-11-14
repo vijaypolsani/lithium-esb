@@ -4,44 +4,42 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd http://www.springframework.org/schema/context
 		http://www.springframework.org/schema/context/spring-context-3.2.xsd http://www.springframework.org/schema/data/elasticsearch http://www.springframework.org/schema/data/elasticsearch/spring-elasticsearch-1.0.xsd">
 
+	<!-- Spring Property Files -->
 	<context:property-placeholder location="classpath:./META-INF/conf/beanEsbConfig.properties" />
-	<import resource="classpath:./spring/commonContext.xml" />
 	<bean class="org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor" />
 
-	<bean id="convertFileNameToModel" class="com.lithium.esb.compliance.common.ConvertFileNameToModel" />
+	<!-- Spring Imports -->
+	<import resource="classpath:./spring/commonContext.xml" />
+
+
+	<!-- ES Definitions -->
+	<elasticsearch:node-client id="client" local="true" />
+	<elasticsearch:repositories base-package="com.lithium.esb.compliance.repositories" />
+	<bean name="elasticsearchTemplate" class="org.springframework.data.elasticsearch.core.ElasticsearchTemplate">
+		<constructor-arg name="client" ref="client" />
+	</bean>
+
+	<!-- Processors -->
+	<bean id="convertFileNameToHdfsFileDetail" class="com.lithium.esb.compliance.common.ConvertFileNameToHdfsFileDetail" />
+	<bean id="convertFileContentToActivityStreamV1" class="com.lithium.esb.compliance.common.ConvertFileContentToActivityStreamV1" />
 	<bean id="hdfsLogProcessor" class="com.lithium.esb.compliance.common.HdfsLogProcessor" />
 	<bean id="commonLogProcessor" class="com.lithium.esb.compliance.common.CommonLogProcessor" />
 	<bean id="splitMessageProcessor" class="com.lithium.esb.compliance.common.SplitMessageProcessor" />
 	<bean id="globalExceptionProcessor" class="com.lithium.esb.compliance.exception.GlobalExceptionProcessor" />
 	<bean id="auditHandler" class="com.lithium.esb.compliance.common.AuditHandler" />
 
-	<elasticsearch:node-client id="client" local="true" />
-	<bean name="elasticsearchTemplate" class="org.springframework.data.elasticsearch.core.ElasticsearchTemplate">
-		<constructor-arg name="client" ref="client" />
-	</bean>
-	<elasticsearch:repositories base-package="com.lithium.esb.compliance.repositories" />
-
-	<bean name="esInboundService" class="com.lithium.esb.compliance.inbound.EsInboundAdaptor">
-	</bean>
-
-	<bean name="esOutboundService" class="com.lithium.esb.compliance.outbound.EsOutboundAdaptor">
-	</bean>
-
+	<!-- Spring Beams -->
+	<bean name="esInboundService" class="com.lithium.esb.compliance.inbound.EsInboundAdaptor" />
+	<bean name="esOutboundService" class="com.lithium.esb.compliance.outbound.EsOutboundAdaptor" />
 	<bean id="hdfs2InboundService" class="com.lithium.esb.compliance.inbound.Hdfs2InboundAdaptor">
 		<constructor-arg name="defaultFs" type="java.lang.String" value="${fs.defaultFS}" />
 		<constructor-arg name="hdfsJobUgi" type="java.lang.String" value="${hdfsJobUgi}" />
 		<constructor-arg name="lookupFolderName" type="java.lang.String" value="${lookupFolderName}" />
 	</bean>
-
 	<bean id="hdfs2InboundAdaptorFactory" class="com.lithium.esb.compliance.inbound.Hdfs2InboundAdaptorFactory">
 		<property name="hdfs2InboundService" ref="hdfs2InboundService" />
 	</bean>
-	<bean id="hdfs2InboundAdaptor" scope="prototype" factory-bean="hdfs2InboundAdaptorFactory" factory-method="createHdfs2InboundService">
-	</bean>
-
+	<bean id="hdfs2InboundAdaptor" scope="prototype" factory-bean="hdfs2InboundAdaptorFactory" factory-method="createHdfs2InboundService" />
 	<bean id="hdfs2ConsumerService" scope="prototype" class="com.lithium.esb.compliance.inbound.Hdfs2ConsumerProvider"
-		factory-method="creatHdfs2ConsumerProviderWithDefaultConfiguration">
-	</bean>
-
-
+		factory-method="creatHdfs2ConsumerProviderWithDefaultConfiguration" />
 </beans>
