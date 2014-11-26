@@ -16,7 +16,6 @@ public class ConvertFileContentToActivityStreamV1 implements Processor {
 	@Override
 	public void process(Exchange exchange) throws Exception {
 		log.info(">>> Inbound message header: " + exchange.getIn().getHeader(FILE_NAME));
-		log.info(">>> Inbound message : " + exchange);
 		Message message = exchange.getIn();
 		String fileName = (String) message.getHeader(FILE_NAME);
 		String rawEvent = (String) message.getBody();

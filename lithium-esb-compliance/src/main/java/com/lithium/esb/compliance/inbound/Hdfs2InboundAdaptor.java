@@ -39,12 +39,13 @@ public class Hdfs2InboundAdaptor implements Hdfs2InboundService {
 		RemoteIterator<LocatedFileStatus> remoteIterator = fs.listFiles(new Path(lookupFolderName), true);
 		while (remoteIterator.hasNext()) {
 			LocatedFileStatus locatedFileStatus = remoteIterator.next();
-			log.info(">>> File Path Name: " + locatedFileStatus.getPath().toString());
+			//log.info(">>> File Path Name: " + locatedFileStatus.getPath().toString());
 			//Removing the hdfs://ip:host from the name
 			//listOfFiles.add((locatedFileStatus.getPath().toString()).substring(fsDefaultFS.length()));
 			//Keeping hdfs://ip:host from the name 
 			listOfFiles.add(locatedFileStatus.getPath().toString());
 		}
+		log.info(">>>Total number of files: " + listOfFiles.size());
 		return ImmutableSet.<String> builder().addAll(listOfFiles).build();
 	}
 

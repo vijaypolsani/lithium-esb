@@ -4,11 +4,11 @@
 	xsi:schemaLocation=" http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd "
 	xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<!-- import the beans from another XML file -->
-	<import resource="classpath:META-INF/spring/beans.xml" />
+	<import resource="./spring-beans-context.xml" />
 
 	<camelContext xmlns="http://camel.apache.org/schema/spring">
 		<!-- Property File Configurations -->
-		<propertyPlaceholder id="properties" location="classpath:META-INF/conf/integrationEsbConfig.properties"
+		<propertyPlaceholder id="properties" location="../conf/integrationEsbConfig.properties"
 			prefixToken="{{" suffixToken="}}" />
 		<!-- ZeroMQ Configurations -->
 		<template id="zeroMqFileTemplate" defaultEndpoint="zeromq:tcp://{{zeromq.host}}:{{zeromq.file_port}}?socketType=PUSH" />
@@ -29,7 +29,7 @@
 
 		<!-- Reading ES files list, Split files list, Read File Content, dump content into MQ -->
 		<route id="Hdfs-File-Reader">
-			<from uri="timer://hdfsScanTimer?fixedRate=true&amp;period=8000" />
+			<from uri="timer://hdfsReadTimer?fixedRate=true&amp;period=8000" />
 			<bean ref="esInboundService" method="getAllFileReadAndFileOpenedStatus(false, false)" />
 			<split>
 				<simple>${body}</simple>
@@ -62,8 +62,31 @@
 						<bean ref="esOutboundService" method="insertActivityStreamInfo" />
 					</split>
 				</throttle>
+				<log message="*** Header File Name: (${header.fileName})" />
+				<bean ref="esOutboundService" method="updateFileKafkaSentStatus('${header.fileName}',true)" />
 			</split>
-			<bean ref="esOutboundService" method="updateFileKafkaSentStatus('${header.fileName}',true)" />
+		</route>
+		<!-- Alive Check Ping Route -->
+		<route id="ping">
+			<!-- incoming requests from the servlet is routed -->
+			<from uri="servlet:///ping" />
+			<choice>
+				<when>
+					<!-- is there a header with the key name? -->
+					<header>name</header>
+					<!-- yes so return back a message to the user -->
+					<transform>
+						<simple>Hello ${header.name} how are you?</simple>
+					</transform>
+				</when>
+				<otherwise>
+					<!-- if no name parameter then output a syntax to the user -->
+					<transform>
+						<constant>pong</constant>
+						<!-- Add a name parameter to uri, eg ?name=foo -->
+					</transform>
+				</otherwise>
+			</choice>
 		</route>
 	</camelContext>
 </beans>

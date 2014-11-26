@@ -17,7 +17,6 @@ public class ConvertFileNameToHdfsFileDetail implements Processor {
 
 	public void process(Exchange exchange) throws Exception {
 		Message message = exchange.getIn();
-		log.info(">>> Inbound message : " + exchange);
 		Set<String> listOfFiles = (Set) message.getBody();
 		message.setMessageId(UUID.randomUUID().toString());
 		Set<HdfsFileDetail> updateToEs = new HashSet<>();
@@ -28,6 +27,6 @@ public class ConvertFileNameToHdfsFileDetail implements Processor {
 		}
 		message.setBody(updateToEs);
 		exchange.setOut(message);
-		log.info(">>> Completed sending multiple fileNames: " + listOfFiles);
+		log.info(">>> Completed sending multiple fileNames total= " + listOfFiles.size());
 	}
 }

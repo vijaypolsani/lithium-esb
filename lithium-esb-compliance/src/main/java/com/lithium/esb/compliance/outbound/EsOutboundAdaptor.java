@@ -35,15 +35,14 @@ public class EsOutboundAdaptor implements EsOutboundService {
 
 	@Override
 	public void updateFilesInfo(Set<HdfsFileDetail> hdfsFilesDetails) {
-		log.info(">>> New Files list recieved to be persisted into ES: " + hdfsFilesDetails);
+		log.info(">>> New Files list recieved to be persisted into ES. total: " + hdfsFilesDetails.size());
 		for (HdfsFileDetail hdfsFileDetail : hdfsFilesDetails) {
 			if (!(hdfsSearchInputFilesRepository.exists(hdfsFileDetail.getId())))
 				hdfsSearchInputFilesRepository.save(hdfsFileDetail);
-			else
-				log.info(">>> File already exits in ES: " + hdfsFileDetail);
+			//else
+				//log.info(">>> File already exits in ES: " + hdfsFileDetail);
 
 		}
-		log.info(">>> Completed save: ");
 
 	}
 
