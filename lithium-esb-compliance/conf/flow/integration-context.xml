@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<beans
+	xsi:schemaLocation=" http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd "
+	xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<!-- import the beans from another XML file -->
+	<import resource="./spring-beans-context.xml" />
+
+	<camelContext xmlns="http://camel.apache.org/schema/spring">
+		<!-- Property File Configurations -->
+		<propertyPlaceholder id="properties" location="file:./conf/integrationEsbConfig.properties"
+			prefixToken="{{" suffixToken="}}" />
+		<!-- ZeroMQ Configurations -->
+		<template id="zeroMqFileTemplate" defaultEndpoint="zeromq:tcp://{{zeromq.host}}:{{zeromq.file_port}}?socketType=PUSH" />
+		<!-- Thread pool for Parallel Operations. Split Configurations -->
+		<threadPoolProfile id="myDefaultProfile" defaultProfile="true" poolSize="{{thread.poolsize}}"
+			maxPoolSize="{{thread.maxpoolsize}}" maxQueueSize="{{thread.maxqueuesize}}" rejectedPolicy="CallerRuns" />
+
+		<!-- Reading HDFS files list, Putting into ES -->
+		<route id="Hdfs-FileList-Query">
+			<from uri="timer://hdfsScanTimer?fixedRate=true&amp;period=25000" />
+			<pipeline>
+				<bean ref="hdfs2InboundAdaptor" method="getSetOfLatestHdfsFiles" />
+				<process ref="convertFileNameToHdfsFileDetail" />
+				<bean ref="esOutboundService" method="updateFilesInfo" />
+			</pipeline>
+		</route>
+
+		<!-- Reading ES files list, Split files list, Read File Content, dump content into MQ -->
+		<route id="Hdfs-File-Reader">
+			<from uri="timer://hdfsReadTimer?fixedRate=true&amp;period=10000" />
+			<bean ref="esInboundService" method="getAllFileReadAndFileOpenedStatus(false, false)" />
+			<split>
+				<simple>${body}</simple>
+				<!-- log message="*** Split Body (${body})" / -->
+				<setHeader headerName="fileName">
+					<simple resultType="java.lang.String">${body}</simple>
+				</setHeader>
+				<bean ref="esOutboundService" method="updateFileOpenedStatus('${header.fileName}',true)" />
+				<bean ref="hdfs2ConsumerService" method="readFileContent" />
+				<log message="*** Hdfs Content Header (${header.fileName})" />
+				<log message="*** Perform Message Encryption now!" />
+				<bean ref="aesMessageEncryption" method="encryptMessage( '${body}')" />
+				<log message="*** Perform Message Decryption now! " />
+				<process ref="commonLogProcessor" />
+				<bean ref="aesMessageDecryption" method="decryptMessage( '${body}')" />
+				<!-- Parallel Socket access of ZMQ is causing issues. Please refrain from that in version 2.2.0. -->
+				<!-- Use socket's to differentiate channels. PUB/SUB PUSH/PULL are with-in a socket -->
+				<bean ref="esOutboundService" method="updateFileReadStatus('${header.fileName}',true)" />
+				<!-- throttle 100000 messages per 1 sec -->
+				<throttle timePeriodMillis="10000">
+					<constant>{{throttle.msg.limit}}</constant>
+					<split shareUnitOfWork="true" streaming="true" parallelProcessing="true" executorServiceRef="myDefaultProfile">
+						<tokenize token="{{split.tokenizer}}" />
+						<!-- Process any specific splits ref="splitMessageProcessor" / -->
+						<!-- If needed perform Decryption & Encryption here. -->
+						<setHeader headerName="kafka.PARTITION_KEY">
+							<constant>{{kafka.partition.key}}</constant>
+						</setHeader>
+						<log message="*** Message kafka send to MQ Header: (${header.KAFKA.PARTITION_KEY}) with Body: (${body})" />
+						<to
+							uri="kafka:{{kafka.host}}:{{kafka.port}}?topic={{kafka.topic}}&amp;zookeeperHost={{zookeeper.host}}&amp;zookeeperPort={{zookeeper.port}}&amp;serializerClass={{kafka.serializer}}" />
+						<process ref="convertFileContentToActivityStreamV1" />
+						<bean ref="esOutboundService" method="insertActivityStreamInfo" />
+					</split>
+				</throttle>
+				<log message="*** Saving Header File Name Status to MQ Sent: (${header.fileName})" />
+				<bean ref="esOutboundService" method="updateFileKafkaSentStatus('${header.fileName}',true)" />
+			</split>
+		</route>
+		<!-- Alive Check Ping Route -->
+		<route id="ping">
+			<!-- incoming requests from the servlet is routed -->
+			<from uri="servlet:///ping" />
+			<choice>
+				<when>
+					<!-- is there a header with the key name? -->
+					<header>name</header>
+					<!-- yes so return back a message to the user -->
+					<transform>
+						<simple>Hello ${header.name} how are you?</simple>
+					</transform>
+				</when>
+				<otherwise>
+					<!-- if no name parameter then output a syntax to the user -->
+					<transform>
+						<constant>pong</constant>
+						<!-- Add a name parameter to uri, eg ?name=foo -->
+					</transform>
+				</otherwise>
+			</choice>
+		</route>
+	</camelContext>
+</beans>
