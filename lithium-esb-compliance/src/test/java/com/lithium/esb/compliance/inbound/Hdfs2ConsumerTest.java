@@ -11,6 +11,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.lithium.streams.compliance.model.SecureEvent;
+
 public class Hdfs2ConsumerTest {
 	private Hdfs2ConsumerProvider hdfs2ConsumerProvider;
 	private static final Logger log = LoggerFactory.getLogger(Hdfs2ConsumerTest.class);
@@ -26,7 +28,7 @@ public class Hdfs2ConsumerTest {
 
 	@Test
 	public void consumeFiles() {
-		String content = null;
+		SecureEvent content = null;
 		try {
 			content = hdfs2ConsumerProvider.readFileContent(FILE_NAME);
 			log.info(">>> Content" + content);

@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory;
 
 import com.lithium.streams.compliance.model.SecureEvent;
 
-public class CommonLogProcessor implements Processor {
-	private static final Logger log = LoggerFactory.getLogger(CommonLogProcessor.class);
+public class ConvertToBytesProcessor implements Processor {
+	private static final Logger log = LoggerFactory.getLogger(ConvertToBytesProcessor.class);
 
 	public void process(Exchange exchange) throws Exception {
 		SecureEvent event = (SecureEvent) exchange.getIn().getBody();

@@ -2,21 +2,26 @@ package com.lithium.esb.compliance.inbound;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.lithium.esb.compliance.api.Hdfs2ConsumerService;
+import com.lithium.esb.compliance.exception.HdfsFileNotFoundException;
+import com.lithium.streams.compliance.model.Payload;
+import com.lithium.streams.compliance.model.SecureEvent;
 
 public class Hdfs2ConsumerProvider implements Hdfs2ConsumerService {
 	private final Configuration conf;
 	private final CompressionCodecFactory factory;
+	private static final Logger log = LoggerFactory.getLogger(Hdfs2ConsumerProvider.class);
 
 	private Hdfs2ConsumerProvider(Configuration conf) {
 		if (conf == null)
@@ -35,21 +40,18 @@ public class Hdfs2ConsumerProvider implements Hdfs2ConsumerService {
 		return new Hdfs2ConsumerProvider(new Configuration());
 	}
 
-	public String readFileContent(String pathLocation) throws IOException {
+	@Override
+	public SecureEvent readFileContent(String pathLocation) throws IOException {
+		//INFO: Estimating the files are never more than 64MB size. May be smaller for LIA
 		Path filePath = new Path(pathLocation);
 		FileSystem fileSystem = FileSystem.get(filePath.toUri(), conf);
-		CompressionCodec codec = factory.getCodec(filePath);
-
-		InputStream stream = null;
-		if (codec != null) {
-			stream = codec.createInputStream(fileSystem.open(filePath));
-		} else {
-			stream = fileSystem.open(filePath);
+		if (!fileSystem.exists(filePath)) {
+			log.error("Input file not found. Please check the location: " + pathLocation);
+			throw new HdfsFileNotFoundException("HDFS-ESB-001", "Input file not found. " + pathLocation);
 		}
-		//INFO: Estimating the files are never more than 64MB size. May be smaller for LIA
-		StringWriter stringWriter = new StringWriter();
-		IOUtils.copy(stream, stringWriter, "UTF-8");
-		return stringWriter.toString();
+		FSDataInputStream inputStream = fileSystem.open(filePath);
+		byte[] bytes = IOUtils.toByteArray(inputStream);
+		return new Payload(bytes);
 	}
 
 	public void createFile(String pathLocation) throws IOException {
