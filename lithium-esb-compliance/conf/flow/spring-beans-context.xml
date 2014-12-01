@@ -22,7 +22,8 @@
 	<bean id="convertFileNameToHdfsFileDetail" class="com.lithium.esb.compliance.common.ConvertFileNameToHdfsFileDetail" />
 	<bean id="convertFileContentToActivityStreamV1" class="com.lithium.esb.compliance.common.ConvertFileContentToActivityStreamV1" />
 	<bean id="hdfsLogProcessor" class="com.lithium.esb.compliance.common.HdfsLogProcessor" />
-	<bean id="commonLogProcessor" class="com.lithium.esb.compliance.common.CommonLogProcessor" />
+	<bean id="convertToSecureEventProcessor" class="com.lithium.esb.compliance.common.ConvertToSecureEventProcessor" />
+	<bean id="convertToBytesProcessor" class="com.lithium.esb.compliance.common.ConvertToBytesProcessor" />
 	<bean id="splitMessageProcessor" class="com.lithium.esb.compliance.common.SplitMessageProcessor" />
 	<bean id="globalExceptionProcessor" class="com.lithium.esb.compliance.exception.GlobalExceptionProcessor" />
 	<bean id="auditHandler" class="com.lithium.esb.compliance.common.AuditHandler" />
@@ -43,5 +44,8 @@
 		factory-method="creatHdfs2ConsumerProviderWithDefaultConfiguration" />
 	<bean name="aesMessageDecryption" class="com.lithium.esb.compliance.beans.AesMessageDecryption" />
 	<bean name="aesMessageEncryption" class="com.lithium.esb.compliance.beans.AesMessageEncryption" />
+	<bean name="readFileContent" class="com.lithium.esb.compliance.common.ReadFileContent" />
+	<bean name="writeFileContent" class="com.lithium.esb.compliance.common.WriteFileContent" />	
+	<bean name="xzDecompressFile" class="com.lithium.esb.compliance.common.XZDecompressFile" />	
 	
 </beans>

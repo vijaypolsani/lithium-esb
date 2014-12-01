@@ -36,18 +36,23 @@
 				<setHeader headerName="fileName">
 					<simple resultType="java.lang.String">${body}</simple>
 				</setHeader>
-				<bean ref="esOutboundService" method="updateFileOpenedStatus('${header.fileName}',true)" />
-				<bean ref="hdfs2ConsumerService" method="readFileContent" />
-				<log message="*** Hdfs Content Header (${header.fileName})" />
-				<log message="*** Perform Message Encryption now!" />
-				<bean ref="aesMessageEncryption" method="encryptMessage( '${body}')" />
-				<log message="*** Perform Message Decryption now! " />
-				<process ref="commonLogProcessor" />
-				<bean ref="aesMessageDecryption" method="decryptMessage( '${body}')" />
-				<!-- Parallel Socket access of ZMQ is causing issues. Please refrain from that in version 2.2.0. -->
-				<!-- Use socket's to differentiate channels. PUB/SUB PUSH/PULL are with-in a socket -->
-				<bean ref="esOutboundService" method="updateFileReadStatus('${header.fileName}',true)" />
-				<!-- throttle 100000 messages per 1 sec -->
+                <bean ref="esOutboundService" method="updateFileOpenedStatus('${header.fileName}',true)" />
+                <bean ref="hdfs2ConsumerService" method="readFileContent" />
+                <log message="*** Hdfs Content Header (${header.fileName})" />
+                <!--log message="*** Perform Message Encryption now!" /-->
+                <!--bean ref="aesMessageEncryption"/-->
+                <!--process ref="convertToBytesProcessor" /-->
+                <!--bean ref="writeFileContent" /-->
+                <!--log message="*** Completed File Write." /-->
+                <log message="*** Perform Message Decryption now! " />
+                <!--bean ref="readFileContent" /-->
+                <bean ref="aesMessageDecryption" />
+                <bean ref="xzDecompressFile" />
+                <process ref="convertToBytesProcessor" />
+                <!-- Parallel Socket access of ZMQ is causing issues. Please refrain from that in version 2.2.0. -->
+                <!-- Use socket's to differentiate channels. PUB/SUB PUSH/PULL are with-in a socket -->
+                <bean ref="esOutboundService" method="updateFileReadStatus('${header.fileName}',true)" />
+                <!-- throttle 100000 messages per 1 sec -->
 				<throttle timePeriodMillis="10000">
 					<constant>{{throttle.msg.limit}}</constant>
 					<split shareUnitOfWork="true" streaming="true" parallelProcessing="true" executorServiceRef="myDefaultProfile">
