@@ -6,6 +6,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.log4j.BasicConfigurator;
 import org.junit.After;
@@ -22,7 +24,8 @@ public class Hdfs2InboundAdaptorTest {
 	public void setUp() throws IOException {
 		BasicConfigurator.resetConfiguration();
 		BasicConfigurator.configure();
-		hadfs2InboundAdaptor = new Hdfs2InboundAdaptor("hdfs://127.0.0.1:9000", "vijay.polsani", "/int");
+		//hadfs2InboundAdaptor = new Hdfs2InboundAdaptor("hdfs://127.0.0.1:9000", "vijay.polsani", "/int");
+		hadfs2InboundAdaptor = new Hdfs2InboundAdaptor("/int", true);
 		clearAll();
 		hadfs2InboundAdaptor.createFile("/int/junit-test-case.test");
 	}

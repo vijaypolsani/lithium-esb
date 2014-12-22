@@ -6,6 +6,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 
 @Document(indexName = "hdfsfiledetails", type = "hdfsfiledetail", shards = 1, replicas = 0, indexStoreType = "memory")
+//@Document(indexName = "hdfsfiledetails", type = "hdfsfiledetails", shards = 1, replicas = 0 , indexStoreType = "default")
 public class HdfsFileDetail {
 
 	@Id

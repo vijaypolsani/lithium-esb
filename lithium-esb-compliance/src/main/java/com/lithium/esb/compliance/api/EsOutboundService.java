@@ -1,9 +1,11 @@
 package com.lithium.esb.compliance.api;
 
+import java.util.Collection;
 import java.util.Set;
 
-import com.lithium.esb.compliance.model.HdfsFileDetail;
 import com.lithium.esb.compliance.model.ActivityStreamV1;
+import com.lithium.esb.compliance.model.HdfsFileDetail;
+import com.lithium.esb.compliance.model.LswEvent;
 
 public interface EsOutboundService {
 
@@ -27,6 +29,10 @@ public interface EsOutboundService {
 
 	public void updateFileOpenedAndFileReadStatus(String id, boolean fileOpened, boolean fileRead);
 
-	public void dropAllFileDetailData();
+	void dropAllFileDetailData();
+
+	public void insertBatchLswEvent(Collection<LswEvent> lswEvents);
+
+	public void insertLswEvent(LswEvent lswEvent);
 
 }

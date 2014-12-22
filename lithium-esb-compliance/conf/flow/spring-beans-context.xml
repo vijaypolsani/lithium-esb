@@ -12,10 +12,12 @@
 
 
 	<!-- ES Definitions -->
-	<elasticsearch:node-client id="client" local="true" />
+	<elasticsearch:node-client id="compliance" local="true" />
+	<!-- Cluster Mode of External ES Server -->
+	<!-- elasticsearch:transport-client id="compliance" cluster-name="elasticsearch" cluster-nodes="127.0.0.1:9300" / -->
 	<elasticsearch:repositories base-package="com.lithium.esb.compliance.repositories" />
 	<bean name="elasticsearchTemplate" class="org.springframework.data.elasticsearch.core.ElasticsearchTemplate">
-		<constructor-arg name="client" ref="client" />
+		<constructor-arg name="client" ref="compliance" />
 	</bean>
 
 	<!-- Processors -->
@@ -32,9 +34,8 @@
 	<bean name="esInboundService" class="com.lithium.esb.compliance.inbound.EsInboundAdaptor" />
 	<bean name="esOutboundService" class="com.lithium.esb.compliance.outbound.EsOutboundAdaptor" />
 	<bean id="hdfs2InboundService" class="com.lithium.esb.compliance.inbound.Hdfs2InboundAdaptor">
-		<constructor-arg name="defaultFs" type="java.lang.String" value="${fs.defaultFS}" />
-		<constructor-arg name="hdfsJobUgi" type="java.lang.String" value="${hdfsJobUgi}" />
 		<constructor-arg name="lookupFolderName" type="java.lang.String" value="${lookupFolderName}" />
+		<constructor-arg name="currentMonthFilesOnly" type="java.lang.Boolean" value="${currentMonthFilesOnly}" />
 	</bean>
 	<bean id="hdfs2InboundAdaptorFactory" class="com.lithium.esb.compliance.inbound.Hdfs2InboundAdaptorFactory">
 		<property name="hdfs2InboundService" ref="hdfs2InboundService" />
@@ -44,8 +45,16 @@
 		factory-method="creatHdfs2ConsumerProviderWithDefaultConfiguration" />
 	<bean name="aesMessageDecryption" class="com.lithium.esb.compliance.beans.AesMessageDecryption" />
 	<bean name="aesMessageEncryption" class="com.lithium.esb.compliance.beans.AesMessageEncryption" />
+
+	<!-- Utility Spring Beans -->
 	<bean name="readFileContent" class="com.lithium.esb.compliance.common.ReadFileContent" />
-	<bean name="writeFileContent" class="com.lithium.esb.compliance.common.WriteFileContent" />	
-	<bean name="xzDecompressFile" class="com.lithium.esb.compliance.common.XZDecompressFile" />	
+	<bean name="writeFileContent" class="com.lithium.esb.compliance.common.WriteFileContent" />
+	<bean name="xzDecompressFile" class="com.lithium.esb.compliance.common.XZDecompressFile" />
+
+	<!-- LSW Spring Beans -->
+	<bean name="lswSqsOutbound" class="com.lithium.esb.compliance.lsw.api.outbound.LswSqsOutboundImpl" />
+	<bean name="convertFileContentToLswEvent" class="com.lithium.esb.compliance.common.ConvertFileContentToLswEvent" />
+	<bean name="lswSqsInbound" class="com.lithium.esb.compliance.lsw.api.inbound.LswSqsInboundImpl" />
 	
+
 </beans>

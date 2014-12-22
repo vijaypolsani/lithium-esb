@@ -6,14 +6,16 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 
 @Document(indexName = "hdfsfilecontent", type = "hdfsfilecontent", shards = 1, replicas = 0, indexStoreType = "memory")
+//@Document(indexName = "hdfsfilecontent", type = "hdfsfilecontent", shards = 1, replicas = 0, indexStoreType = "default")
 public class ActivityStreamV1 {
 
 	@Id
+	private String id = "";
 	private String frameId = "";
-	private String fileSource = "";
-	private String title = "";
+	private String type = "";
 	private String published = "";
-	private String verb = "";
+	private String version = "";
+	private String fileSource = "";
 	private static final AtomicLong sequenceNumber = new AtomicLong(1);
 
 	public ActivityStreamV1(String id) {
@@ -21,6 +23,14 @@ public class ActivityStreamV1 {
 			frameId = String.valueOf(sequenceNumber.getAndIncrement());
 		else
 			frameId = id;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	public String getFrameId() {
@@ -47,20 +57,26 @@ public class ActivityStreamV1 {
 		this.published = published;
 	}
 
-	public String getTitle() {
-		return title;
+	public String getType() {
+		return type;
 	}
 
-	public void setTitle(String title) {
-		this.title = title;
+	public void setType(String type) {
+		this.type = type;
 	}
 
-	public String getVerb() {
-		return verb;
+	public String getVersion() {
+		return version;
 	}
 
-	public void setVerb(String verb) {
-		this.verb = verb;
+	public void setVersion(String version) {
+		this.version = version;
+	}
+
+	@Override
+	public String toString() {
+		return "ActivityStreamV1 [id=" + id + ", frameId=" + frameId + ", type=" + type + ", published=" + published
+				+ ", version=" + version + ", fileSource=" + fileSource + "]";
 	}
 
 }

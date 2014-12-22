@@ -2,6 +2,8 @@ package com.lithium.esb.compliance.inbound;
 
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
+import java.time.LocalDate;
+import java.time.Year;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -16,32 +18,43 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSet;
 import com.lithium.esb.compliance.api.Hdfs2InboundService;
+import static com.lithium.esb.compliance.util.DateMonthZeroPadder.paddWithZerosForMonth;
 
 public class Hdfs2InboundAdaptor implements Hdfs2InboundService {
 
 	private static final Logger log = LoggerFactory.getLogger(Hdfs2InboundAdaptor.class);
-	private static final Configuration conf = new Configuration();
+	private final Configuration conf = new Configuration();
 	private final Set<String> listOfFiles = new LinkedHashSet<>();
 	private final String lookupFolderName;
-	private final String fsDefaultFS;
-
+	private final Boolean currentMonthFilesOnly;
+	private static final String FOLDER_END_DELIMITER = "/";
 	private final FileSystem fs;
+	private final String folderPath;
 
-	public Hdfs2InboundAdaptor(String defaultFs, String hdfsJobUgi, String lookupFolderName) throws IOException {
+	public Hdfs2InboundAdaptor(String lookupFolderName, Boolean currentMonthFilesOnly) throws IOException {
+		//Perform Argument Check.
 		this.lookupFolderName = lookupFolderName;
-		this.fsDefaultFS = defaultFs;
-		conf.set("fs.defaultFS", defaultFs);
-		conf.set("hadoop.job.ugi", hdfsJobUgi);
+		this.currentMonthFilesOnly = currentMonthFilesOnly;
+		if (currentMonthFilesOnly.booleanValue()) {
+			if (lookupFolderName.endsWith(FOLDER_END_DELIMITER))
+				folderPath = lookupFolderName + Year.now() + FOLDER_END_DELIMITER
+						+ paddWithZerosForMonth(LocalDate.now().getMonthValue());
+			else
+				folderPath = lookupFolderName + FOLDER_END_DELIMITER + Year.now() + FOLDER_END_DELIMITER
+						+ paddWithZerosForMonth(LocalDate.now().getMonthValue());
+		} else
+			folderPath = lookupFolderName;
 		fs = FileSystem.get(conf);
 	}
 
+	//Location of the path: Ex: /stage/actiance.stage/events/2014/09. Always searched in the current MONTH folder of HDFS.
 	public Set<String> getSetOfLatestHdfsFiles() throws IOException {
-		RemoteIterator<LocatedFileStatus> remoteIterator = fs.listFiles(new Path(lookupFolderName), true);
+
+		RemoteIterator<LocatedFileStatus> remoteIterator = fs.listFiles(new Path(folderPath), true);
 		while (remoteIterator.hasNext()) {
 			LocatedFileStatus locatedFileStatus = remoteIterator.next();
 			//log.info(">>> File Path Name: " + locatedFileStatus.getPath().toString());
-			//Removing the hdfs://ip:host from the name
-			//listOfFiles.add((locatedFileStatus.getPath().toString()).substring(fsDefaultFS.length()));
+			//log.info(">>> File Name: " + locatedFileStatus.getPath().getName());
 			//Keeping hdfs://ip:host from the name 
 			listOfFiles.add(locatedFileStatus.getPath().toString());
 		}

@@ -31,7 +31,7 @@ public class AesMessageDecryption {
 				SecureEvent eventDecrypted = iDecryption.performMessageDecryption(inputData,
 						KeyServerProperties.COMMUNITY_NAME.getValue(), source.get());
 				log.info("***Decrypted Data length: " + eventDecrypted.getMessage().length);
-				log.info("***Decrypted Data: " + new String(eventDecrypted.getMessage()));
+				//log.info("***Decrypted Data: " + new String(eventDecrypted.getMessage()));
 				return eventDecrypted;
 			}
 		}

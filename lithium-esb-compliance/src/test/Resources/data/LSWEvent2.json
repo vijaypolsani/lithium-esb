@@ -1,0 +1,35 @@
+{
+            "_index": "activities_2014-09-29",
+            "_type": "DocumentSnapshot",
+            "_id": "ea-19451462",
+            "_score": 1,
+            "_source": {
+               "version": 1411999657613,
+               "casePriority": 3,
+               "caseWorkqueueId": 73,
+               "caseWorkqueueUuid": "2ffad34b-d68e-4aa0-9b74-68c400529095",
+               "caseCreatedDttm": 1411967765863,
+               "createdDttm": 1411999613000,
+               "publishedDttm": 1411999558000,
+               "documentId": 19451462,
+               "documentUuid": "b250001e-bb56-49f4-bd53-df4cc15e90c6",
+               "providerType": "twitter",
+               "provider": "twitter",
+               "caseId": 9094198,
+               "caseUuid": "2ffad34b-d68e-4aa0-9b74-68c400529095",
+               "docResId": 0,
+               "isResponse": false,
+               "documentDuplicateCount": 1,
+               "authorId": 4756614,
+               "personId": 4837234,
+               "businessHourType": 0,
+               "currentCombinedTagIds": [
+                  2627,
+                  2245,
+                  14
+               ],
+               "currentUserId": 221,
+               "currentTeamId": 89,
+               "companyKey": "ea"
+            }
+}

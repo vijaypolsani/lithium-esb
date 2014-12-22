@@ -15,7 +15,7 @@ public class ConvertFileContentToActivityStreamV1 implements Processor {
 
 	@Override
 	public void process(Exchange exchange) throws Exception {
-		log.info(">>> Inbound message header: " + exchange.getIn().getHeader(FILE_NAME));
+		log.debug(">>> Inbound message header: " + exchange.getIn().getHeader(FILE_NAME));
 		Message message = exchange.getIn();
 		String fileName = (String) message.getHeader(FILE_NAME);
 		String rawEvent = (String) message.getBody();
@@ -25,6 +25,6 @@ public class ConvertFileContentToActivityStreamV1 implements Processor {
 		message.setHeader(FILE_NAME, fileName);
 		message.setBody(activityStreamV1);
 		exchange.setOut(message);
-		log.info(">>> Completed sending multiple fileNames: " + activityStreamV1.toString());
+		log.debug(">>> Completed sending multiple fileNames: " + activityStreamV1.toString());
 	}
 }

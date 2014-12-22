@@ -7,9 +7,7 @@
 		<artifactId>lithium-esb</artifactId>
 		<version>0.0.1</version>
 	</parent>
-	<groupId>com.lithium.integrations.esb</groupId>
 	<artifactId>lithium-esb-compliance</artifactId>
-	<version>0.0.1</version>
 	<name>lithium-esb-compliance</name>
 	<url>http://maven.apache.org</url>
 	<properties>
@@ -120,17 +118,17 @@
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-webapp</artifactId>
-			<version>9.2.0.v20140526</version>
+			<version>9.2.3.v20140905</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-server</artifactId>
-			<version>9.2.0.v20140526</version>
+			<version>9.2.3.v20140905</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-servlet</artifactId>
-			<version>9.2.0.v20140526</version>
+			<version>9.2.3.v20140905</version>
 		</dependency>
 
 		<!-- testing -->
@@ -159,7 +157,19 @@
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-elasticsearch</artifactId>
-			<version>1.0.0.RELEASE</version>
+			<version>1.2.0.M1</version>
+		</dependency>
+		<!-- Decompress -->
+		<dependency>
+			<groupId>org.tukaani</groupId>
+			<artifactId>xz</artifactId>
+			<version>1.5</version>
+		</dependency>
+		<!-- LSW AWS Access to SQS -->
+		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-java-sdk</artifactId>
+			<version>1.9.8</version>
 		</dependency>
 	</dependencies>
 	<build>

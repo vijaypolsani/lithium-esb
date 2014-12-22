@@ -18,7 +18,7 @@
 
 		<!-- Reading HDFS files list, Putting into ES -->
 		<route id="Hdfs-FileList-Query">
-			<from uri="timer://hdfsScanTimer?fixedRate=true&amp;period=25000" />
+			<from uri="timer://hdfsScanTimer?fixedRate=true&amp;period=40000" />
 			<pipeline>
 				<bean ref="hdfs2InboundAdaptor" method="getSetOfLatestHdfsFiles" />
 				<process ref="convertFileNameToHdfsFileDetail" />
@@ -26,9 +26,9 @@
 			</pipeline>
 		</route>
 
-		<!-- Reading ES files list, Split files list, Read File Content, dump content into MQ -->
+		<!--LIA Reading ES files list, Split files list, Read File Content, dump content into MQ -->
 		<route id="Hdfs-File-Reader">
-			<from uri="timer://hdfsReadTimer?fixedRate=true&amp;period=10000" />
+			<from uri="timer://hdfsReadTimer?fixedRate=true&amp;period=20000" />
 			<bean ref="esInboundService" method="getAllFileReadAndFileOpenedStatus(false, false)" />
 			<split>
 				<simple>${body}</simple>
@@ -36,23 +36,23 @@
 				<setHeader headerName="fileName">
 					<simple resultType="java.lang.String">${body}</simple>
 				</setHeader>
-                <bean ref="esOutboundService" method="updateFileOpenedStatus('${header.fileName}',true)" />
-                <bean ref="hdfs2ConsumerService" method="readFileContent" />
-                <log message="*** Hdfs Content Header (${header.fileName})" />
-                <!--log message="*** Perform Message Encryption now!" /-->
-                <!--bean ref="aesMessageEncryption"/-->
-                <!--process ref="convertToBytesProcessor" /-->
-                <!--bean ref="writeFileContent" /-->
-                <!--log message="*** Completed File Write." /-->
-                <log message="*** Perform Message Decryption now! " />
-                <!--bean ref="readFileContent" /-->
-                <bean ref="aesMessageDecryption" />
-                <bean ref="xzDecompressFile" />
-                <process ref="convertToBytesProcessor" />
-                <!-- Parallel Socket access of ZMQ is causing issues. Please refrain from that in version 2.2.0. -->
-                <!-- Use socket's to differentiate channels. PUB/SUB PUSH/PULL are with-in a socket -->
-                <bean ref="esOutboundService" method="updateFileReadStatus('${header.fileName}',true)" />
-                <!-- throttle 100000 messages per 1 sec -->
+				<bean ref="esOutboundService" method="updateFileOpenedStatus('${header.fileName}',true)" />
+				<bean ref="hdfs2ConsumerService" method="readFileContent" />
+				<log message="*** Hdfs Content Header (${header.fileName})" />
+				<!--log message="*** Perform Message Encryption now!" / -->
+				<!--bean ref="aesMessageEncryption"/ -->
+				<!--process ref="convertToBytesProcessor" / -->
+				<!--bean ref="writeFileContent" / -->
+				<!--log message="*** Completed File Write." / -->
+				<log message="*** Perform Message Decryption now! " />
+				<!--bean ref="readFileContent" / -->
+				<bean ref="aesMessageDecryption" />
+				<bean ref="xzDecompressFile" />
+				<process ref="convertToBytesProcessor" />
+				<!-- Parallel Socket access of ZMQ is causing issues. Please refrain from that in version 2.2.0. -->
+				<!-- Use socket's to differentiate channels. PUB/SUB PUSH/PULL are with-in a socket -->
+				<bean ref="esOutboundService" method="updateFileReadStatus('${header.fileName}',true)" />
+				<!-- throttle 100000 messages per 1 sec -->
 				<throttle timePeriodMillis="10000">
 					<constant>{{throttle.msg.limit}}</constant>
 					<split shareUnitOfWork="true" streaming="true" parallelProcessing="true" executorServiceRef="myDefaultProfile">
@@ -62,9 +62,9 @@
 						<setHeader headerName="kafka.PARTITION_KEY">
 							<constant>{{kafka.partition.key}}</constant>
 						</setHeader>
-						<log message="*** Message kafka send to MQ Header: (${header.KAFKA.PARTITION_KEY}) with Body: (${body})" />
+						<!-- log message="*** Message kafka send to MQ Header: (${header.KAFKA.PARTITION_KEY}) with Body: (${body})" / -->
 						<to
-							uri="kafka:{{kafka.host}}:{{kafka.port}}?topic={{kafka.topic}}&amp;zookeeperHost={{zookeeper.host}}&amp;zookeeperPort={{zookeeper.port}}&amp;serializerClass={{kafka.serializer}}" />
+							uri="kafka:{{kafka.host}}:{{kafka.port}}?topic={{kafka.topic.lia}}&amp;zookeeperHost={{zookeeper.host}}&amp;zookeeperPort={{zookeeper.port}}&amp;serializerClass={{kafka.serializer}}" />
 						<process ref="convertFileContentToActivityStreamV1" />
 						<bean ref="esOutboundService" method="insertActivityStreamInfo" />
 					</split>
@@ -72,6 +72,30 @@
 				<log message="*** Saving Header File Name Status to MQ Sent: (${header.fileName})" />
 				<bean ref="esOutboundService" method="updateFileKafkaSentStatus('${header.fileName}',true)" />
 			</split>
+		</route>
+		<!-- LSW Reader, reading SQS messages and publishing into Kafka. Also sends attributes into ES -->
+		<route id="Lsw-SQS-Listener">
+			<from uri="timer://hdfsReadTimer?fixedRate=true&amp;period=20000" />
+			<bean ref="lswSqsOutbound" method="consumeMessages()" />
+			<throttle timePeriodMillis="10000">
+				<constant>{{throttle.msg.limit}}</constant>
+				<setHeader headerName="kafka.PARTITION_KEY">
+					<constant>{{kafka.partition.key}}</constant>
+				</setHeader>
+				<split>
+					<simple>${body}</simple>
+					<process ref="convertToBytesProcessor" />
+					<to
+						uri="kafka:{{kafka.host}}:{{kafka.port}}?topic={{kafka.topic.lsw}}&amp;zookeeperHost={{zookeeper.host}}&amp;zookeeperPort={{zookeeper.port}}&amp;serializerClass={{kafka.serializer}}" />
+				</split>
+			</throttle>
+			<process ref="convertFileContentToLswEvent" />
+			<bean ref="esOutboundService" method="insertBatchLswEvent" />
+		</route>
+		<!-- Simulation Program of messages in SQS from LSW System -->
+		<route id="Lsw-SQS-Sample-Send">
+			<from uri="timer://hdfsReadTimer?fixedRate=true&amp;period=20000" />
+			<bean ref="lswSqsInbound" method="sendSampleSqsMessage()" />
 		</route>
 		<!-- Alive Check Ping Route -->
 		<route id="ping">
