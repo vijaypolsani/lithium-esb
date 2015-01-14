@@ -1,3 +1,6 @@
+/*
+ * 
+ */
 package com.lithium.esb.compliance.beans;
 
 import java.util.Optional;
@@ -13,16 +16,28 @@ import com.lithium.streams.compliance.model.SecureEvent;
 import com.lithium.streams.compliance.security.KeyServerProperties;
 import com.lithium.streams.compliance.util.KeySourceUtil;
 
+/**
+ * The AesMessageDecryption provides the entry point to Decryption of the message by KeyServer
+ */
 public class AesMessageDecryption {
 
+	/** The Constant log. */
 	private static final Logger log = LoggerFactory.getLogger(AesMessageDecryption.class);
 
+	/** The key source util. */
 	@Autowired
 	private KeySourceUtil keySourceUtil;
 
+	/** The i decryption. */
 	@Autowired
 	private IDecryption iDecryption;
 
+	/**
+	 * Decrypt message.
+	 *
+	 * @param inputData the input data
+	 * @return the secure event
+	 */
 	public SecureEvent decryptMessage(SecureEvent inputData) {
 		final Optional<KeySource> source = keySourceUtil.getKeySource();
 		if (source.isPresent()) {

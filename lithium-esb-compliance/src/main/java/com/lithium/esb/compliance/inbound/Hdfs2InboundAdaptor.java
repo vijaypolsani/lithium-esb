@@ -20,17 +20,43 @@ import com.google.common.collect.ImmutableSet;
 import com.lithium.esb.compliance.api.Hdfs2InboundService;
 import static com.lithium.esb.compliance.util.DateMonthZeroPadder.paddWithZerosForMonth;
 
+/**
+ * The program looks for the Folder Name to read and then appends the current month and year to the format.
+ * The LIA instance is located at: '/stage/actiance.stage/events'+2015 (Current Year) + 01 (Current Month)
+ */
 public class Hdfs2InboundAdaptor implements Hdfs2InboundService {
 
+	/** The Constant log. */
 	private static final Logger log = LoggerFactory.getLogger(Hdfs2InboundAdaptor.class);
+	
+	/** The conf. */
 	private final Configuration conf = new Configuration();
+	
+	/** The list of files. */
 	private final Set<String> listOfFiles = new LinkedHashSet<>();
+	
+	/** The lookup folder name. */
 	private final String lookupFolderName;
+	
+	/** The current month files only. */
 	private final Boolean currentMonthFilesOnly;
+	
+	/** The Constant FOLDER_END_DELIMITER. */
 	private static final String FOLDER_END_DELIMITER = "/";
+	
+	/** The fs. */
 	private final FileSystem fs;
+	
+	/** The folder path. */
 	private final String folderPath;
 
+	/**
+	 * Instantiates a new hdfs2 inbound adaptor.
+	 *
+	 * @param lookupFolderName the lookup folder name
+	 * @param currentMonthFilesOnly the current month files only
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 */
 	public Hdfs2InboundAdaptor(String lookupFolderName, Boolean currentMonthFilesOnly) throws IOException {
 		//Perform Argument Check.
 		this.lookupFolderName = lookupFolderName;
@@ -48,6 +74,9 @@ public class Hdfs2InboundAdaptor implements Hdfs2InboundService {
 	}
 
 	//Location of the path: Ex: /stage/actiance.stage/events/2014/09. Always searched in the current MONTH folder of HDFS.
+	/* (non-Javadoc)
+	 * @see com.lithium.esb.compliance.api.Hdfs2InboundService#getSetOfLatestHdfsFiles()
+	 */
 	public Set<String> getSetOfLatestHdfsFiles() throws IOException {
 
 		RemoteIterator<LocatedFileStatus> remoteIterator = fs.listFiles(new Path(folderPath), true);
@@ -62,14 +91,25 @@ public class Hdfs2InboundAdaptor implements Hdfs2InboundService {
 		return ImmutableSet.<String> builder().addAll(listOfFiles).build();
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lithium.esb.compliance.api.Hdfs2InboundService#deleteAllFiles(java.lang.String, boolean)
+	 */
 	public void deleteAllFiles(String path, boolean recursiveTrue) throws IOException {
 		fs.delete(new Path(path), recursiveTrue);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lithium.esb.compliance.api.Hdfs2InboundService#createFile(java.lang.String)
+	 */
 	public void createFile(String path) throws IOException {
 		fs.createNewFile(new Path(path));
 	}
 
+	/**
+	 * The main method.
+	 *
+	 * @param args the arguments
+	 */
 	public static void main(String args[]) {
 
 		try {

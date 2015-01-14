@@ -13,9 +13,17 @@ import com.lithium.esb.compliance.model.LswEvent;
 import com.lithium.esb.compliance.util.UnmarshallToLswEvent;
 import com.lithium.streams.compliance.model.SecureEvent;
 
+/**
+ * The Class ConvertFileContentToLswEvent converts LSW SQS event to Event Formatted to display.
+ */
 public class ConvertFileContentToLswEvent implements Processor {
+	
+	/** The Constant log. */
 	private static final Logger log = LoggerFactory.getLogger(ConvertFileContentToLswEvent.class);
 
+	/* (non-Javadoc)
+	 * @see org.apache.camel.Processor#process(org.apache.camel.Exchange)
+	 */
 	@Override
 	public void process(Exchange exchange) throws Exception {
 		Message message = exchange.getIn();

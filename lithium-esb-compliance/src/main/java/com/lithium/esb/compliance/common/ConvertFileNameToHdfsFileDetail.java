@@ -12,9 +12,18 @@ import org.slf4j.LoggerFactory;
 
 import com.lithium.esb.compliance.model.HdfsFileDetail;
 
+/**
+ * The Class ConvertFileNameToHdfsFileDetail reads the file name and formats to the ES model strucutre so as to store and 
+ * Query for details later for updates on the status.
+ */
 public class ConvertFileNameToHdfsFileDetail implements Processor {
+	
+	/** The Constant log. */
 	private static final Logger log = LoggerFactory.getLogger(ConvertFileNameToHdfsFileDetail.class);
 
+	/* (non-Javadoc)
+	 * @see org.apache.camel.Processor#process(org.apache.camel.Exchange)
+	 */
 	public void process(Exchange exchange) throws Exception {
 		Message message = exchange.getIn();
 		Set<String> listOfFiles = (Set) message.getBody();

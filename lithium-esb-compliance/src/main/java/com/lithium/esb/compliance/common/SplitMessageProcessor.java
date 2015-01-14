@@ -8,13 +8,29 @@ import org.apache.camel.Processor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The Class SplitMessageProcessor implements the logic to split the newline seperated data into individual events.
+ */
 public class SplitMessageProcessor implements Processor {
+	
+	/** The Constant log. */
 	private static final Logger log = LoggerFactory.getLogger(SplitMessageProcessor.class);
+	
+	/** The Constant CAMEL_SPLIT_COMPLETE. */
 	private static final String CAMEL_SPLIT_COMPLETE = "CamelSplitComplete";
+	
+	/** The Constant CAMEL_SPLIT_SIZE. */
 	private static final String CAMEL_SPLIT_SIZE = "CamelSplitSize";
+	
+	/** The Constant CAMEL_SPLIT_INDEX. */
 	private static final String CAMEL_SPLIT_INDEX = "CamelSplitIndex";
+	
+	/** The Constant splitMessages. */
 	private static final List<String> splitMessages = new ArrayList<>();
 
+	/* (non-Javadoc)
+	 * @see org.apache.camel.Processor#process(org.apache.camel.Exchange)
+	 */
 	public void process(Exchange exchange) throws Exception {
 		exchange.setOut(exchange.getIn());
 		log.info(">>> Inbound messages from SplitMessageProcessor: exchangeID: " + exchange.getExchangeId());

@@ -9,10 +9,20 @@ import org.slf4j.LoggerFactory;
 import com.lithium.esb.compliance.model.ActivityStreamV1;
 import com.lithium.esb.compliance.util.JsonMessageParser;
 
+/**
+ * The processor converts the FileContent generated from the LIA Logs into the Standard ActivityStreams v1.0 model.
+ */
 public class ConvertFileContentToActivityStreamV1 implements Processor {
+
+	/** The Constant log. */
 	private static final Logger log = LoggerFactory.getLogger(ConvertFileContentToActivityStreamV1.class);
+
+	/** The Constant FILE_NAME. */
 	private static final String FILE_NAME = "fileName";
 
+	/* (non-Javadoc)
+	 * @see org.apache.camel.Processor#process(org.apache.camel.Exchange)
+	 */
 	@Override
 	public void process(Exchange exchange) throws Exception {
 		log.debug(">>> Inbound message header: " + exchange.getIn().getHeader(FILE_NAME));

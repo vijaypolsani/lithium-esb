@@ -10,10 +10,21 @@ import org.tukaani.xz.XZInputStream;
 import com.lithium.streams.compliance.model.Payload;
 import com.lithium.streams.compliance.model.SecureEvent;
 
+/**
+ * Data in HDFS is in compressed format with an extension of .xz, Tikaani api is used to de-compress the files and 
+ * parse the data into byte array so as to allow it be then decrypted by the KeyServer key exchange.
+ */
 public class XZDecompressFile {
 
+	/** The xz input stream. */
 	private XZInputStream xzInputStream;
 
+	/**
+	 * Decompress hdfs file.
+	 *
+	 * @param secureEvent the secure event
+	 * @return the secure event
+	 */
 	public SecureEvent decompressHdfsFile(SecureEvent secureEvent) {
 		InputStream inputStream = new ByteArrayInputStream(secureEvent.getMessage());
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

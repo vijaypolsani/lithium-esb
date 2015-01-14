@@ -1,12 +1,10 @@
 package com.lithium.esb.compliance.lsw.api.outbound;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.elasticsearch.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,12 +23,28 @@ import com.lithium.esb.compliance.lsw.api.LswSqsOutbound;
 import com.lithium.streams.compliance.model.Payload;
 import com.lithium.streams.compliance.model.SecureEvent;
 
+/**
+ * The implementation of reading Messages to the AWS SQS. ConsumeMessages can read messages in bulk and return the List.
+ * 
+ */
 public class LswSqsOutboundImpl implements LswSqsOutbound {
+	
+	/** The Constant log. */
 	private static final Logger log = LoggerFactory.getLogger(LswSqsOutboundImpl.class);
+	
+	/** The credentials. */
 	private static AWSCredentials credentials = null;
+	
+	/** The queue url. */
 	private static String queueUrl = null;
+	
+	/** The sqs. */
 	private static AmazonSQS sqs = null;
+	
+	/** The receive message request. */
 	private static ReceiveMessageRequest receiveMessageRequest = null;
+	
+	/** The Constant usWest2. */
 	private static final Region usWest2 = Region.getRegion(Regions.US_WEST_1);
 
 	static {
@@ -55,6 +69,9 @@ public class LswSqsOutboundImpl implements LswSqsOutbound {
 	 *  
 	 */
 
+	/* (non-Javadoc)
+	 * @see com.lithium.esb.compliance.lsw.api.LswSqsOutbound#consumeMessages()
+	 */
 	@Override
 	public List<SecureEvent> consumeMessages() {
 		final List<SecureEvent> secureEvents = new ArrayList<>();

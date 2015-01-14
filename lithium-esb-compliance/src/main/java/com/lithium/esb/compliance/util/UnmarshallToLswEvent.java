@@ -11,9 +11,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.lithium.esb.compliance.model.LswEvent;
 
+/**
+ * The unmarshall class for LSW object model definition.
+ */
 public class UnmarshallToLswEvent {
+	
+	/** The Constant mapper. */
 	private final static ObjectMapper mapper = new ObjectMapper();
+	
+	/** The Constant jsonFactory. */
 	private static final JsonFactory jsonFactory = new JsonFactory();
+	
+	/** The Constant log. */
 	private static final Logger log = LoggerFactory.getLogger(UnmarshallToLswEvent.class);
 	static {
 		jsonFactory.enable(Feature.ALLOW_COMMENTS);
@@ -29,6 +38,13 @@ public class UnmarshallToLswEvent {
 		mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
 	}
 
+	/**
+	 * Parses the incomings json stream to object.
+	 *
+	 * @param inputJsonStream the input json stream
+	 * @return the lsw event
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 */
 	public static LswEvent parseIncomingsJsonStreamToObject(final byte[] inputJsonStream) throws IOException {
 		return mapper.readValue(inputJsonStream, LswEvent.class);
 	}
