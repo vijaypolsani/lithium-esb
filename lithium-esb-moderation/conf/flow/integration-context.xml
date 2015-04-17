@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<beans
+	xsi:schemaLocation=" http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd "
+	xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<!-- import the beans from another XML file -->
+	<import resource="./spring-beans-context.xml" />
+
+	<camelContext xmlns="http://camel.apache.org/schema/spring">
+		<!-- Property File Configurations -->
+		<propertyPlaceholder id="properties" location="file:./conf/integrationEsbConfig.properties"
+			prefixToken="{{" suffixToken="}}" />
+		<!-- Thread pool for Parallel Operations. Split Configurations -->
+		<threadPoolProfile id="myDefaultProfile" defaultProfile="true" poolSize="{{thread.poolsize}}"
+			maxPoolSize="{{thread.maxpoolsize}}" maxQueueSize="{{thread.maxqueuesize}}" rejectedPolicy="CallerRuns" />
+		<!-- LSW Reader, reading SQS messages and publishing into Kafka. Also sends attributes into ES -->
+		<route id="Kafka2Kinesis">
+			<from
+				uri="kafka:{{kafka.host}}:{{kafka.port}}?topic={{kafka.topic}}&amp;zookeeperHost={{zookeeper.host}}&amp;zookeeperPort={{zookeeper.port}}&amp;groupId={{kafka.groupid}}" />
+			<bean ref="lswTopicOutbound" method="sendStreamMessage" />
+		</route>
+		<!-- Alive Check Ping Route -->
+		<route id="ping">
+			<from uri="servlet:///ping" />
+			<choice>
+				<when>
+					<header>name</header>
+					<transform>
+						<simple>{"response":"Hello ${header.name} how are you?"}</simple>
+					</transform>
+				</when>
+				<otherwise>
+					<transform>
+						<constant>{"response":"pong"}</constant>
+					</transform>
+				</otherwise>
+			</choice>
+		</route>
+	</camelContext>
+</beans>
