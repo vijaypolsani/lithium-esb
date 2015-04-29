@@ -86,7 +86,7 @@ public class LswTopicOutboundImpl implements LswTopicOutbound {
 			final PutRecordRequest putRecordRequest = new PutRecordRequest();
 			putRecordRequest.setStreamName(streamName);
 
-			putRecordRequest.setData(ByteBuffer.wrap(String.format(message, createTime).getBytes()));
+			putRecordRequest.setData(ByteBuffer.wrap(message.getBytes()));
 			putRecordRequest.setPartitionKey(String.format("partitionKey-%d", createTime));
 			putRecordResult = amazonKinesisClient.putRecord(putRecordRequest);
 			log.info("Successfully put record, partition key : " + putRecordRequest.getPartitionKey() + " ShardID : "
