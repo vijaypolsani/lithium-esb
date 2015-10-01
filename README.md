@@ -1,2 +1,2 @@
 # lithium-esb
-* Lithium ESB platform for integration of HDFS, Kafka, Kinenis using CAMEL
+* Lithium ESB platform for integration of HDFS, Kafka, Kinesis using CAMEL
